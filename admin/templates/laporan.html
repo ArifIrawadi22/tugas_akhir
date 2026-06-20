@@ -1,0 +1,115 @@
+{% extends 'base.html' %} {% block title %}Laporan{% endblock %} {% block
+page_title %}Laporan & Analisis{% endblock %} {% block content %}
+
+<!-- Tombol Export -->
+<div class="mb-3 text-end">
+  <a href="/laporan/export" class="btn btn-purple text-white">
+    ⬇️ Export Excel
+  </a>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Penjualan per Tipe -->
+  <div class="col-md-6">
+    <div class="card-stat h-100">
+      <div class="fw-semibold mb-3">📦 Penjualan per Kategori Produk</div>
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Kategori</th>
+            <th>Unit Terjual</th>
+            <th>Total Omzet</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in tipe_rows %}
+          <tr>
+            <td>
+              {% if row[0]=='serum' %}<span class="badge badge-serum"
+                >serum</span
+              >
+              {% elif row[0]=='toner' %}<span class="badge badge-toner"
+                >toner</span
+              >
+              {% else %}<span class="badge bg-info bg-opacity-25 text-info"
+                >{{ row[0] }}</span
+              >{% endif %}
+            </td>
+            <td><strong>{{ "{:,}".format(row[2]|int) }}</strong> unit</td>
+            <td class="text-success fw-semibold">
+              Rp {{ "{:,.0f}".format(row[1]) }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Top Brand -->
+  <div class="col-md-6">
+    <div class="card-stat h-100">
+      <div class="fw-semibold mb-3">🏅 Top 10 Brand by Omzet</div>
+      {% for row in brand_rows %}
+      <div class="brand-row mb-3">
+        <div class="d-flex justify-content-between mb-1">
+          <span class="fw-semibold"> {{ loop.index }}. {{ row[0] }} </span>
+
+          <span class="text-success fw-bold">
+            Rp {{ "{:,.0f}".format(row[1]) }}
+          </span>
+        </div>
+
+        <div class="progress custom-progress">
+          <div
+            class="progress-bar custom-bar"
+            role="progressbar"
+            style="width: {{ ((row[1] / brand_rows[0][1]) * 100)|int }}%"
+          ></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Transaksi Terbaru -->
+<div class="card-stat">
+  <div class="fw-semibold mb-3">🧾 Transaksi Terbaru</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>#ID</th>
+          <th>Produk</th>
+          <th>Brand</th>
+          <th>Bulan</th>
+          <th>Qty</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transaksi %}
+        <tr>
+          <td class="text-muted small">#{{ t.id }}</td>
+          <td class="small">
+            {{ t.produk.nama[:40] if t.produk else '-' }}{% if t.produk and
+            t.produk.nama|length > 40 %}…{% endif %}
+          </td>
+          <td>
+            <span class="badge bg-light text-dark small"
+              >{{ t.produk.brand if t.produk else '-' }}</span
+            >
+          </td>
+          <td class="small text-muted">{{ t.tanggal }}</td>
+          <td>{{ t.jumlah }} unit</td>
+          <td class="fw-semibold text-success">
+            Rp {{ "{:,.0f}".format(t.total) }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

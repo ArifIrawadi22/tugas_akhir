@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Edit Produk{% endblock %}
+{% block page_title %}Edit Produk{% endblock %}
+{% block content %}
+<div class="card-stat" style="max-width:700px">
+  <h5 class="fw-bold mb-4">✏️ Edit Produk</h5>
+  <form method="POST">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">Brand</label>
+        <input name="brand" value="{{ produk.brand }}" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">Nama Produk</label>
+        <input name="nama" value="{{ produk.nama }}" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold">Tipe</label>
+        <select name="tipe" class="form-select">
+          {% for t in ['serum','toner','facial wash','lainnya'] %}
+          <option value="{{ t }}" {% if produk.tipe==t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold">Ukuran</label>
+        <input name="ukuran" value="{{ produk.ukuran }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold">Harga (Rp)</label>
+        <input name="harga" type="number" value="{{ produk.harga }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold">Stok</label>
+        <input name="stok" type="number" value="{{ produk.stok }}" class="form-control">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label small fw-semibold">BPOM ID</label>
+        <input name="bpom_id" value="{{ produk.bpom_id }}" class="form-control">
+      </div>
+      <div class="col-12">
+        <label class="form-label small fw-semibold">Deskripsi</label>
+        <textarea name="deskripsi" class="form-control" rows="3">{{ produk.deskripsi }}</textarea>
+      </div>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <button class="btn btn-pink text-white">Simpan Perubahan</button>
+      <a href="/produk" class="btn btn-outline-secondary">Batal</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

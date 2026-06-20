@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Manajemen Produk{% endblock %}
+{% block page_title %}Manajemen Produk{% endblock %}
+{% block content %}
+
+<!-- Filter & Tambah -->
+<div class="card-stat mb-3 d-flex flex-wrap gap-2 align-items-center justify-content-between">
+  <form class="d-flex gap-2 flex-wrap" method="GET">
+    <input name="cari" value="{{ cari }}" class="form-control form-control-sm" style="width:200px" placeholder="🔍 Cari produk / brand…">
+    <select name="tipe" class="form-select form-select-sm" style="width:160px">
+      <option value="">Semua Tipe</option>
+      {% for t in tipe_list %}
+      <option value="{{ t }}" {% if tipe==t %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-sm btn-purple">Filter</button>
+    <a href="/produk" class="btn btn-sm btn-outline-secondary">Reset</a>
+  </form>
+  <button class="btn btn-sm btn-pink" data-bs-toggle="modal" data-bs-target="#modalTambah">+ Tambah Produk</button>
+</div>
+
+<!-- Tabel Produk -->
+<div class="card-stat">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <span class="text-muted small">Menampilkan <strong>{{ produk|length }}</strong> produk</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr>
+        <th>Produk</th><th>Brand</th><th>Tipe</th><th>Ukuran</th>
+        <th>Harga</th><th>Stok</th><th>Terjual</th><th>Rating</th><th>BPOM</th><th>Aksi</th>
+      </tr></thead>
+      <tbody>
+      {% for p in produk %}
+      <tr>
+        <td style="max-width:180px">
+          <div class="fw-semibold small">{{ p.nama[:45] }}{% if p.nama|length > 45 %}…{% endif %}</div>
+          <div class="text-muted" style="font-size:.75rem">{{ p.deskripsi[:60] }}{% if p.deskripsi|length > 60 %}…{% endif %}</div>
+        </td>
+        <td><span class="badge bg-light text-dark">{{ p.brand }}</span></td>
+        <td>
+          {% if p.tipe == 'serum' %}<span class="badge badge-serum">serum</span>
+          {% elif p.tipe == 'toner' %}<span class="badge badge-toner">toner</span>
+          {% else %}<span class="badge bg-info bg-opacity-25 text-info">{{ p.tipe }}</span>{% endif %}
+        </td>
+        <td class="text-muted small">{{ p.ukuran }}</td>
+        <td>Rp {{ "{:,.0f}".format(p.harga) }}</td>
+        <td>
+          {% if p.stok < 20 %}<span class="text-danger fw-bold">{{ p.stok }}</span>
+          {% else %}<span>{{ p.stok }}</span>{% endif %}
+        </td>
+        <td><strong>{{ p.terjual }}</strong></td>
+        <td>⭐ {{ p.rating }}</td>
+        <td><span class="badge bg-success bg-opacity-25 text-success" style="font-size:.7rem">{{ p.bpom_id[:12] }}</span></td>
+        <td>
+          <a href="/produk/edit/{{ p.id }}" class="btn btn-xs btn-outline-secondary btn-sm py-0 px-2">✏️</a>
+          <a href="/produk/hapus/{{ p.id }}" class="btn btn-xs btn-outline-danger btn-sm py-0 px-2"
+             onclick="return confirm('Hapus produk ini?')">🗑️</a>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Tambah -->
+<div class="modal fade" id="modalTambah" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">➕ Tambah Produk Baru</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/produk/tambah" method="POST">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Brand</label>
+              <input name="brand" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Nama Produk</label>
+              <input name="nama" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Tipe</label>
+              <select name="tipe" class="form-select" required>
+                <option value="serum">Serum</option>
+                <option value="toner">Toner</option>
+                <option value="facial wash">Facial Wash</option>
+                <option value="lainnya">Lainnya</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Ukuran</label>
+              <input name="ukuran" class="form-control" placeholder="contoh: 30ml">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Harga (Rp)</label>
+              <input name="harga" type="number" class="form-control" required min="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Stok</label>
+              <input name="stok" type="number" class="form-control" required min="0">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label small fw-semibold">BPOM ID</label>
+              <input name="bpom_id" class="form-control" placeholder="NA...">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Deskripsi / Manfaat</label>
+              <textarea name="deskripsi" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-pink text-white">Simpan Produk</button>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

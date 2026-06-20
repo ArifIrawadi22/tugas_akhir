@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Beli Produk – Toko Kosmetik</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #fdf4ff; font-family: 'Segoe UI', sans-serif; }
+    .navbar-brand { font-weight: 700; color: #a855f7 !important; }
+    .box { background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 16px rgba(0,0,0,.07); }
+    .produk-mini { background: #fdf4ff; border-radius: 12px; padding: 1rem; border: 1px solid #e9d5ff; }
+    .harga-total { font-size: 1.5rem; font-weight: 700; color: #7c3aed; }
+    .btn-pesan { background: linear-gradient(135deg,#e879a0,#a855f7); color: #fff; border: none; border-radius: 10px; padding: .65rem 1.5rem; font-size: 1rem; }
+    .btn-pesan:hover { opacity:.9; color:#fff; }
+    label { font-size: .88rem; font-weight: 600; color: #374151; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
+  <a class="navbar-brand" href="/katalog">💄 Toko Kosmetik</a>
+  <a href="/produk/{{ produk.id }}" class="btn btn-sm btn-outline-secondary">← Kembali</a>
+</nav>
+<div class="container py-4" style="max-width:700px">
+  <h4 class="fw-bold mb-4">🛒 Form Pemesanan</h4>
+  <div class="produk-mini d-flex gap-3 align-items-center mb-4">
+    <div style="font-size:2.5rem">{% if produk.tipe=='serum' %}🧪{% elif produk.tipe=='toner' %}💧{% else %}🫧{% endif %}</div>
+    <div class="flex-grow-1">
+      <div class="fw-semibold">{{ produk.nama[:60] }}</div>
+      <div class="text-muted small">{{ produk.brand }} • {{ produk.ukuran }}</div>
+      <div class="fw-bold mt-1" style="color:#7c3aed">Rp {{ "{:,.0f}".format(produk.harga) }} / unit</div>
+    </div>
+    <div class="text-muted small">Stok: {{ produk.stok }}</div>
+  </div>
+  <form method="POST">
+    <div class="box">
+      <h6 class="fw-bold mb-3">📦 Data Pemesan</h6>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label>Nama Lengkap *</label>
+          <input name="nama_pembeli" class="form-control mt-1" required placeholder="Nama kamu">
+        </div>
+        <div class="col-md-6">
+          <label>No. HP / WhatsApp *</label>
+          <input name="no_hp" class="form-control mt-1" required placeholder="08xx-xxxx-xxxx">
+        </div>
+        <div class="col-md-6">
+          <label>Email *</label>
+          <input name="email" type="email" class="form-control mt-1" required placeholder="email@contoh.com">
+        </div>
+        <div class="col-md-6">
+          <label>Jumlah Beli *</label>
+          <input name="jumlah" type="number" class="form-control mt-1" min="1" max="{{ produk.stok }}" value="1" required id="qty" onchange="hitungTotal()">
+        </div>
+        <div class="col-12">
+          <label>Alamat Pengiriman *</label>
+          <textarea name="alamat" class="form-control mt-1" rows="3" required placeholder="Jl. Contoh No.1, Kota, Provinsi, Kode Pos"></textarea>
+        </div>
+      </div>
+      <div class="mt-4 p-3 text-center" style="background:#fdf4ff;border-radius:10px;border:1px solid #e9d5ff">
+        <div class="text-muted small">Total Pembayaran</div>
+        <div class="harga-total" id="totalHarga">Rp {{ "{:,.0f}".format(produk.harga) }}</div>
+        <div class="text-muted small" id="infoQty">1 unit × Rp {{ "{:,.0f}".format(produk.harga) }}</div>
+      </div>
+      <div class="mt-3 p-2 small text-muted" style="background:#f9fafb;border-radius:8px">
+        ✅ BPOM: <strong>{{ produk.bpom_id }}</strong> — produk telah terdaftar dan aman
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-pesan flex-grow-1">✅ Konfirmasi Pesanan</button>
+        <a href="/produk/{{ produk.id }}" class="btn btn-outline-secondary">Batal</a>
+      </div>
+    </div>
+  </form>
+</div>
+<script>
+const harga = {{ produk.harga }};
+function hitungTotal() {
+  const qty = parseInt(document.getElementById('qty').value) || 1;
+  document.getElementById('totalHarga').textContent = 'Rp ' + (qty*harga).toLocaleString('id-ID');
+  document.getElementById('infoQty').textContent = qty + ' unit × Rp ' + harga.toLocaleString('id-ID');
+}
+</script>
+</body>
+</html>

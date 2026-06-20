@@ -1,0 +1,162 @@
+{% extends 'base.html' %} {% block title %}Dashboard{% endblock %} {% block
+page_title %}Dashboard Penjualan Kosmetik{% endblock %} {% block content %}
+
+<div class="mb-4">
+  <a
+    href="/dashboard?tahun=2024"
+    class="btn {% if tahun=='2024' %}btn-primary{% else %}btn-outline-primary{% endif %}"
+  >
+    2024
+  </a>
+
+  <a
+    href="/dashboard?tahun=2025"
+    class="btn {% if tahun=='2025' %}btn-primary{% else %}btn-outline-primary{% endif %}"
+  >
+    2025
+  </a>
+
+  <a
+    href="/dashboard?tahun=2026"
+    class="btn {% if tahun=='2026' %}btn-primary{% else %}btn-outline-primary{% endif %}"
+  >
+    2026
+  </a>
+</div>
+
+<!-- Kartu Statistik -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card-stat">
+      <div class="text-muted small mb-1">Total Produk</div>
+      <div class="fs-2 fw-bold" style="color: #7c3aed">{{ total_produk }}</div>
+      <div class="text-muted small">produk terdaftar</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card-stat">
+      <div class="text-muted small mb-1">Total Brand</div>
+      <div class="fs-2 fw-bold" style="color: #be185d">{{ total_brand }}</div>
+      <div class="text-muted small">brand berbeda</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card-stat">
+      <div class="text-muted small mb-1">Total Terjual</div>
+      <div class="fs-2 fw-bold" style="color: #0369a1">
+        {{ "{:,}".format(total_terjual) }}
+      </div>
+      <div class="text-muted small">unit produk</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card-stat">
+      <div class="text-muted small mb-1">Total Omzet</div>
+      <div class="fs-2 fw-bold" style="color: #15803d">
+        Rp {{ "{:,.0f}".format(total_omzet) }}
+      </div>
+      <div class="text-muted small">estimasi penjualan</div>
+    </div>
+  </div>
+</div>
+
+{% if stok_menipis > 0 %}
+<div
+  class="alert alert-warning d-flex align-items-center gap-2 mb-4"
+  style="border-radius: 10px"
+>
+  ⚠️ <strong>{{ stok_menipis }} produk</strong>&nbsp;memiliki stok kurang dari
+  20 unit — segera restock!
+</div>
+{% endif %}
+
+<!-- Grafik -->
+<div class="row g-3 mb-4">
+  <div class="col-md-8">
+    <div class="card-stat">
+      <div class="fw-semibold mb-3">📈 Penjualan Per Bulan ({{ tahun }})</div>
+      <canvas id="chartBulan" height="100"></canvas>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card-stat">
+      <div class="fw-semibold mb-3">🥧 Distribusi Tipe Produk</div>
+      <canvas id="chartTipe" height="180"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Produk Terlaris -->
+<div class="card-stat">
+  <div class="fw-semibold mb-3">🏆 5 Produk Terlaris</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Produk</th>
+          <th>Brand</th>
+          <th>Tipe</th>
+          <th>Harga</th>
+          <th>Terjual</th>
+          <th>Rating</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in terlaris %}
+        <tr>
+          <td class="text-muted">{{ loop.index }}</td>
+          <td class="fw-semibold" style="max-width: 200px">
+            {{ p.nama[:40] }}{% if p.nama|length > 40 %}…{% endif %}
+          </td>
+          <td><span class="badge bg-light text-dark">{{ p.brand }}</span></td>
+          <td>
+            <span class="badge badge-{{ p.tipe.replace(' ','') }}"
+              >{{ p.tipe }}</span
+            >
+          </td>
+          <td>Rp {{ "{:,.0f}".format(p.harga) }}</td>
+          <td><strong>{{ p.terjual }}</strong></td>
+          <td>⭐ {{ p.rating }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // Grafik Bulanan
+  new Chart(document.getElementById('chartBulan'), {
+    type: 'bar',
+    data: {
+      labels: {{ bulan_label | tojson }},
+      datasets: [{
+        label: 'Total Penjualan (Rp)',
+        data: {{ bulan_total | tojson }},
+        backgroundColor: 'rgba(168,85,247,0.7)',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { callback: v => 'Rp '+v.toLocaleString('id') } }
+      }
+    }
+  });
+
+  // Grafik Donut
+  new Chart(document.getElementById('chartTipe'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ tipe_label | tojson }},
+      datasets: [{ data: {{ tipe_count | tojson }},
+        backgroundColor: ['#a855f7','#e879a0','#38bdf8'],
+        borderWidth: 0
+      }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+  });
+</script>
+{% endblock %}

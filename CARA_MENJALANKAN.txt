@@ -1,0 +1,42 @@
+============================================
+  CARA MENJALANKAN DUA APLIKASI TERPISAH
+============================================
+
+STRUKTUR FOLDER:
+  toko_split/
+  ├── kosmetik.db          ← DATABASE BERSAMA (otomatis dibuat)
+  ├── Product_Kosmetic.xlsx
+  ├── admin/
+  │   ├── app_admin.py     ← Jalankan ini untuk ADMIN
+  │   └── templates/
+  └── user/
+      ├── app_user.py      ← Jalankan ini untuk USER
+      └── templates/
+
+--------------------------------------------
+LANGKAH 1 — Buka 2 terminal di VS Code
+  (klik icon + di terminal untuk terminal baru)
+
+--------------------------------------------
+LANGKAH 2 — Terminal 1: Jalankan ADMIN
+  cd D:\...\toko_split\admin
+  python app_admin.py
+
+  Buka browser: http://127.0.0.1:5001
+  Login: admin / admin123
+
+--------------------------------------------
+LANGKAH 3 — Terminal 2: Jalankan USER
+  cd D:\...\toko_split\user
+  python app_user.py
+
+  Buka browser: http://127.0.0.1:5002
+
+--------------------------------------------
+CATATAN PENTING:
+  - Jalankan ADMIN dulu (port 5001) agar
+    database & data produk terbuat otomatis
+  - Baru jalankan USER (port 5002)
+  - Keduanya pakai DATABASE yang SAMA
+  - Pesanan dari user langsung muncul di admin
+============================================

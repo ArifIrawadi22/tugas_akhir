@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Katalog Kosmetik – Belanja Skincare Terbaik</title>
+  <meta name="description" content="Temukan produk kosmetik dan skincare terbaik. Serum, toner, facial wash dari brand ternama dengan harga terjangkau.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- SEMANTIC WEB: Schema.org untuk Google & mesin pencari -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "name": "Toko Kosmetik",
+    "description": "Toko produk kosmetik skincare Indonesia",
+    "url": "http://localhost:5000/toko",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Katalog Produk Kosmetik",
+      "numberOfItems": {{ produk|length }}
+    }
+  }
+  </script>
+
+  <style>
+    body { background: #fdf4ff; font-family: 'Segoe UI', sans-serif; }
+    .navbar-brand { font-weight: 700; color: #a855f7 !important; font-size: 1.3rem; }
+    .hero { background: linear-gradient(135deg,#f5a7c7,#c084e8); padding: 3rem 0 2rem; text-align: center; }
+    .hero h1 { color: #fff; font-weight: 700; font-size: 2rem; }
+    .hero p { color: rgba(255,255,255,.85); }
+    .card-produk { border: none; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.07); transition: .2s; background: #fff; height: 100%; }
+    .card-produk:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(168,85,247,.15); }
+    .badge-tipe { font-size: .7rem; padding: .25rem .6rem; border-radius: 20px; }
+    .badge-serum { background: #ede9fe; color: #7c3aed; }
+    .badge-toner { background: #fce7f3; color: #be185d; }
+    .badge-facial { background: #e0f2fe; color: #0369a1; }
+    .harga { font-size: 1.1rem; font-weight: 700; color: #7c3aed; }
+    .terjual { font-size: .75rem; color: #9ca3af; }
+    .btn-beli { background: linear-gradient(135deg,#e879a0,#a855f7); color: #fff; border: none; border-radius: 8px; font-size: .85rem; }
+    .btn-beli:hover { opacity: .9; color: #fff; }
+    .filter-bar { background: #fff; border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .bpom-badge { font-size: .65rem; background: #f0fdf4; color: #166534; border-radius: 4px; padding: 2px 6px; }
+    .stok-habis { opacity: .5; pointer-events: none; }
+    .admin-link { font-size: .8rem; color: #9ca3af; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
+  <span class="navbar-brand">💄 Toko Kosmetik</span>
+  <div class="d-flex gap-2 align-items-center">
+    <a href="/api/produk" target="_blank" class="admin-link">🔗 API Data</a>
+    <a href="/cek-pesanan" class="btn btn-sm btn-outline-secondary me-1">🔍 Cek Pesanan</a><a href="/" class="btn btn-sm btn-outline-secondary">Admin Login</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>✨ Katalog Produk Kosmetik</h1>
+  <p>{{ produk|length }} produk tersedia • Serum, Toner, Facial Wash dari brand terpercaya</p>
+  <form class="d-flex justify-content-center gap-2 mt-3 flex-wrap" method="GET">
+    <input name="cari" value="{{ cari }}" class="form-control" style="max-width:280px;border-radius:30px"
+           placeholder="🔍 Cari produk atau brand...">
+    <input type="hidden" name="tipe" value="{{ tipe }}">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <button class="btn btn-light fw-semibold px-4" style="border-radius:30px">Cari</button>
+  </form>
+</div>
+
+<div class="container py-4">
+
+  <!-- Filter Bar -->
+  <div class="filter-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+    <div class="d-flex gap-2 flex-wrap">
+      <span class="text-muted small">Filter:</span>
+      <a href="/toko?sort={{ sort }}" class="btn btn-sm {% if not tipe %}btn-purple text-white{% else %}btn-outline-secondary{% endif %}"
+         style="border-radius:20px;{% if not tipe %}background:#a855f7;border-color:#a855f7{% endif %}">Semua</a>
+      {% for t in tipe_list %}
+      <a href="/toko?tipe={{ t }}&sort={{ sort }}"
+         class="btn btn-sm {% if tipe==t %}btn-pink text-white{% else %}btn-outline-secondary{% endif %}"
+         style="border-radius:20px;{% if tipe==t %}background:#e879a0;border-color:#e879a0{% endif %}">
+        {{ t|title }}
+      </a>
+      {% endfor %}
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      <span class="text-muted small">Urutkan:</span>
+      <select class="form-select form-select-sm" style="width:140px" onchange="window.location='/toko?tipe={{ tipe }}&cari={{ cari }}&sort='+this.value">
+        <option value="terlaris" {% if sort=='terlaris' %}selected{% endif %}>Terlaris</option>
+        <option value="rating"   {% if sort=='rating'   %}selected{% endif %}>Rating ⭐</option>
+        <option value="termurah" {% if sort=='termurah' %}selected{% endif %}>Termurah</option>
+        <option value="termahal" {% if sort=='termahal' %}selected{% endif %}>Termahal</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Grid Produk -->
+  <div class="row g-3">
+    {% for p in produk %}
+    <!-- SEMANTIC WEB: setiap produk punya itemscope Product -->
+    <div class="col-6 col-md-4 col-lg-3" itemscope itemtype="https://schema.org/Product">
+      <div class="card-produk p-3 d-flex flex-column">
+        <!-- Ikon produk berdasarkan tipe -->
+        <div class="text-center mb-2" style="font-size:2.5rem;background:#fdf4ff;border-radius:10px;padding:.5rem">
+          {% if p.tipe == 'serum' %}🧪{% elif p.tipe == 'toner' %}💧{% else %}🫧{% endif %}
+        </div>
+
+        <div class="mb-1">
+          <span class="badge badge-{{ p.tipe.replace(' ','') }} badge-tipe">{{ p.tipe }}</span>
+        </div>
+
+        <!-- itemprop = semantic web -->
+        <div class="fw-semibold small mb-1" itemprop="name" style="line-height:1.3">
+          {{ p.nama[:55] }}{% if p.nama|length > 55 %}…{% endif %}
+        </div>
+        <div class="text-muted small mb-2" itemprop="brand" itemscope itemtype="https://schema.org/Brand">
+          <span itemprop="name">{{ p.brand }}</span>
+        </div>
+
+        <div class="mb-1">
+          <span class="bpom-badge" title="Nomor BPOM (Semantic Identifier)">✅ BPOM: {{ p.bpom_id[:14] }}</span>
+        </div>
+
+        <div class="mt-auto pt-2">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="harga" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+              <meta itemprop="priceCurrency" content="IDR">
+              <span itemprop="price" content="{{ p.harga }}">Rp {{ "{:,.0f}".format(p.harga) }}</span>
+            </span>
+            <span>⭐ <span itemprop="aggregateRating" itemscope itemtype="https://schema.org/AggregateRating">
+              <span itemprop="ratingValue">{{ p.rating }}</span>
+            </span></span>
+          </div>
+          <div class="terjual mb-2">{{ p.terjual }} terjual • Stok: {{ p.stok }}</div>
+          <a href="/produk/{{ p.id }}" class="btn btn-beli w-100 btn-sm py-1 mb-1">Lihat Detail →</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if not produk %}
+  <div class="text-center py-5 text-muted">
+    <div style="font-size:3rem">🔍</div>
+    <p>Produk tidak ditemukan. Coba kata kunci lain.</p>
+    <a href="/katalog" class="btn btn-outline-secondary">Lihat Semua Produk</a>
+  </div>
+  {% endif %}
+
+  <!-- Info Semantic Web -->
+  <div class="mt-5 p-3 text-center" style="background:#ede9fe;border-radius:12px">
+    <small class="text-muted">
+      🌐 Data produk ini tersedia secara semantik di
+      <a href="/api/produk" target="_blank" style="color:#7c3aed">API JSON-LD</a>
+      — dapat dibaca oleh Google, mesin pencari, dan aplikasi lain (Semantic Web)
+    </small>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
