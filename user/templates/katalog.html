@@ -14,7 +14,7 @@
     "@type": "Store",
     "name": "Toko Kosmetik",
     "description": "Toko produk kosmetik skincare Indonesia",
-    "url": "http://localhost:5000/toko",
+    "url": "http://localhost:5000/katalog",
     "hasOfferCatalog": {
       "@type": "OfferCatalog",
       "name": "Katalog Produk Kosmetik",
@@ -24,11 +24,61 @@
   </script>
 
   <style>
-    body { background: #fdf4ff; font-family: 'Segoe UI', sans-serif; }
-    .navbar-brand { font-weight: 700; color: #a855f7 !important; font-size: 1.3rem; }
-    .hero { background: linear-gradient(135deg,#f5a7c7,#c084e8); padding: 3rem 0 2rem; text-align: center; }
-    .hero h1 { color: #fff; font-weight: 700; font-size: 2rem; }
-    .hero p { color: rgba(255,255,255,.85); }
+.hero {
+  background: url("/static/img/banner.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 3rem 0 2rem;
+  text-align: center;
+  position: relative;
+}
+
+    /* ===== Trust badges di hero ===== */
+    .trust-row { margin-top: 1rem; }
+    .trust-pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      background: rgba(255,255,255,.22); border: 1px solid rgba(255,255,255,.4);
+      color: #fff; font-size: .8rem; font-weight: 600;
+      border-radius: 30px; padding: .4rem 1rem; margin: 0 .3rem .5rem 0;
+    }
+
+    /* ===== Gambar pada banner hero ===== */
+    .hero-image-frame {
+      border-radius: 18px; overflow: hidden; box-shadow: 0 16px 36px -16px rgba(59,7,100,.4);
+      max-width: 380px; margin: 0 auto; aspect-ratio: 4/3; background: rgba(255,255,255,.18);
+    }
+    .hero-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hero-image-fallback {
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg,#fbcfe8,#e9d5ff);
+      color: #7c3aed; font-size: 2.5rem;
+    }
+    .hero-image-fallback::after { content: "💄✨"; }
+
+    /* ===== Banner promo bestseller ===== */
+    .promo-banner {
+      background: linear-gradient(120deg,#3b0764,#7c3aed);
+      padding: 1.6rem 0 1.8rem;
+    }
+    .promo-banner .promo-title { color: #fff; font-weight: 700; font-size: 1.15rem; margin: 0; }
+    .promo-banner .promo-sub { color: rgba(255,255,255,.7); font-size: .82rem; }
+    .promo-scroll { display: flex; gap: .9rem; overflow-x: auto; padding-bottom: .4rem; }
+    .promo-scroll::-webkit-scrollbar { height: 6px; }
+    .promo-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.35); border-radius: 6px; }
+    .promo-card {
+      min-width: 190px; flex-shrink: 0; background: #fff; border-radius: 12px;
+      padding: .9rem; text-decoration: none; color: inherit; display: block;
+      box-shadow: 0 8px 18px -8px rgba(0,0,0,.3);
+    }
+    .promo-card .rank {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%; background: #f5a7c7; color: #7c3aed;
+      font-size: .7rem; font-weight: 800; margin-bottom: .4rem;
+    }
+    .promo-card .nama-mini { font-size: .82rem; font-weight: 700; min-height: 36px; line-height: 1.25; color: #1f2937; }
+    .promo-card .harga-mini { color: #7c3aed; font-weight: 800; font-size: .88rem; }
+    .promo-card .terjual-mini { font-size: .68rem; color: #9ca3af; }
+
     .card-produk { border: none; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.07); transition: .2s; background: #fff; height: 100%; }
     .card-produk:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(168,85,247,.15); }
     .badge-tipe { font-size: .7rem; padding: .25rem .6rem; border-radius: 20px; }
@@ -47,27 +97,79 @@
 </head>
 <body>
 
+{% set total_terjual = produk|sum(attribute='terjual') %}
+{% set total_brand = produk|map(attribute='brand')|unique|list|length %}
+{% set avg_rating = (produk|sum(attribute='rating') / produk|length) if produk|length > 0 else 0 %}
+{% set bestseller = produk|sort(attribute='terjual', reverse=true) %}
+
 <!-- Navbar -->
 <nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
   <span class="navbar-brand">💄 Toko Kosmetik</span>
   <div class="d-flex gap-2 align-items-center">
-    <a href="/api/produk" target="_blank" class="admin-link">🔗 API Data</a>
     <a href="/cek-pesanan" class="btn btn-sm btn-outline-secondary me-1">🔍 Cek Pesanan</a><a href="/" class="btn btn-sm btn-outline-secondary">Admin Login</a>
   </div>
 </nav>
 
-<!-- Hero -->
+<!-- Hero / Banner utama -->
 <div class="hero">
-  <h1>✨ Katalog Produk Kosmetik</h1>
-  <p>{{ produk|length }} produk tersedia • Serum, Toner, Facial Wash dari brand terpercaya</p>
-  <form class="d-flex justify-content-center gap-2 mt-3 flex-wrap" method="GET">
-    <input name="cari" value="{{ cari }}" class="form-control" style="max-width:280px;border-radius:30px"
-           placeholder="🔍 Cari produk atau brand...">
-    <input type="hidden" name="tipe" value="{{ tipe }}">
-    <input type="hidden" name="sort" value="{{ sort }}">
-    <button class="btn btn-light fw-semibold px-4" style="border-radius:30px">Cari</button>
-  </form>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-7 text-lg-start">
+        <h1>✨ Katalog Produk Kosmetik</h1>
+        <p>{{ produk|length }} produk tersedia • Serum, Toner, Facial Wash dari brand terpercaya</p>
+
+        <div class="trust-row">
+          <span class="trust-pill">✅ 100% Bersertifikat BPOM</span>
+          <span class="trust-pill">⭐ Rating {{ "%.2f"|format(avg_rating) }}/5</span>
+          <span class="trust-pill">🏷️ {{ total_brand }} Brand</span>
+          <span class="trust-pill">📦 {{ total_terjual }} Terjual</span>
+        </div>
+
+        <form class="d-flex gap-2 mt-3 flex-wrap justify-content-lg-start justify-content-center" method="GET">
+          <input name="cari" value="{{ cari }}" class="form-control" style="max-width:280px;border-radius:30px"
+                 placeholder="🔍 Cari produk atau brand...">
+          <input type="hidden" name="tipe" value="{{ tipe }}">
+          <input type="hidden" name="sort" value="{{ sort }}">
+          <button class="btn btn-light fw-semibold px-4" style="border-radius:30px">Cari</button>
+        </form>
+      </div>
+
+      <div class="col-lg-5 mt-4 mt-lg-0 text-center">
+        <div class="hero-image-frame">
+          <img src="{{ banner_image_url|default('/static/img/banner-hero.jpg') }}"
+               alt="Banner promo skincare"
+               class="hero-image"
+               onerror="this.closest('.hero-image-frame').classList.add('hero-image-fallback'); this.remove();">
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Banner promo: produk terlaris -->
+{% if bestseller %}
+<div class="promo-banner">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-baseline mb-3 flex-wrap">
+      <p class="promo-title">🔥 Produk Terlaris</p>
+      <span class="promo-sub">Paling banyak dibeli pelanggan kami</span>
+    </div>
+    <div class="promo-scroll">
+      {% for p in bestseller[:8] %}
+      <a href="/produk/{{ p.id }}" class="promo-card">
+        <div class="rank">{{ loop.index }}</div>
+        <div class="nama-mini">{{ p.nama[:42] }}{% if p.nama|length > 42 %}…{% endif %}</div>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <span class="harga-mini">Rp {{ "{:,.0f}".format(p.harga) }}</span>
+          <span style="font-size:.7rem;color:#9ca3af;">⭐{{ "%.1f"|format(p.rating) }}</span>
+        </div>
+        <div class="terjual-mini mt-1">{{ p.terjual }} terjual</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <div class="container py-4">
 
@@ -75,10 +177,10 @@
   <div class="filter-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
     <div class="d-flex gap-2 flex-wrap">
       <span class="text-muted small">Filter:</span>
-      <a href="/toko?sort={{ sort }}" class="btn btn-sm {% if not tipe %}btn-purple text-white{% else %}btn-outline-secondary{% endif %}"
+      <a href="/katalog?sort={{ sort }}" class="btn btn-sm {% if not tipe %}btn-purple text-white{% else %}btn-outline-secondary{% endif %}"
          style="border-radius:20px;{% if not tipe %}background:#a855f7;border-color:#a855f7{% endif %}">Semua</a>
       {% for t in tipe_list %}
-      <a href="/toko?tipe={{ t }}&sort={{ sort }}"
+      <a href="/katalog?tipe={{ t|urlencode }}&sort={{ sort|urlencode }}{% if cari %}&cari={{ cari|urlencode }}{% endif %}"
          class="btn btn-sm {% if tipe==t %}btn-pink text-white{% else %}btn-outline-secondary{% endif %}"
          style="border-radius:20px;{% if tipe==t %}background:#e879a0;border-color:#e879a0{% endif %}">
         {{ t|title }}
@@ -87,7 +189,7 @@
     </div>
     <div class="d-flex gap-2 align-items-center">
       <span class="text-muted small">Urutkan:</span>
-      <select class="form-select form-select-sm" style="width:140px" onchange="window.location='/toko?tipe={{ tipe }}&cari={{ cari }}&sort='+this.value">
+      <select class="form-select form-select-sm" style="width:140px" onchange="window.location='/katalog?tipe='+encodeURIComponent('{{ tipe }}')+'&cari='+encodeURIComponent('{{ cari }}')+'&sort='+this.value">
         <option value="terlaris" {% if sort=='terlaris' %}selected{% endif %}>Terlaris</option>
         <option value="rating"   {% if sort=='rating'   %}selected{% endif %}>Rating ⭐</option>
         <option value="termurah" {% if sort=='termurah' %}selected{% endif %}>Termurah</option>
