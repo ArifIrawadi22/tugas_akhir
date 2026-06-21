@@ -1,238 +1,441 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{ produk.nama }} – Toko Kosmetik</title>
-  <meta name="description" content="{{ produk.deskripsi[:150] }}">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ produk.nama }} – Toko Kosmetik</title>
+    <meta name="description" content="{{ produk.deskripsi[:150] }}" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
 
-  <!-- SEMANTIC WEB LENGKAP: Schema.org Product -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": "{{ produk.nama }}",
-    "description": "{{ produk.deskripsi | replace('"', '\\"') | replace('\n', ' ') }}",
-    "brand": {
-      "@type": "Brand",
-      "name": "{{ produk.brand }}"
-    },
-    "category": "{{ produk.tipe }}",
-    "identifier": "{{ produk.bpom_id }}",
-    "url": "http://localhost:5000/produk/{{ produk.id }}",
-    "offers": {
-      "@type": "Offer",
-      "price": {{ produk.harga }},
-      "priceCurrency": "IDR",
-      "availability": "{% if produk.stok > 0 %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
-      "seller": {
-        "@type": "Organization",
-        "name": "Toko Kosmetik"
+    <!-- SEMANTIC WEB LENGKAP: Schema.org Product -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "{{ produk.nama }}",
+        "description": "{{ produk.deskripsi | replace('"', '\\"') | replace('\n', ' ') }}",
+        "brand": {
+          "@type": "Brand",
+          "name": "{{ produk.brand }}"
+        },
+        "category": "{{ produk.tipe }}",
+        "identifier": "{{ produk.bpom_id }}",
+        "url": "http://localhost:5000/produk/{{ produk.id }}",
+        "offers": {
+          "@type": "Offer",
+          "price": {{ produk.harga }},
+          "priceCurrency": "IDR",
+          "availability": "{% if produk.stok > 0 %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+          "seller": {
+            "@type": "Organization",
+            "name": "Toko Kosmetik"
+          }
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "{{ produk.rating }}",
+          "bestRating": "5",
+          "worstRating": "1",
+          "reviewCount": "{{ produk.terjual }}"
+        }
       }
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "{{ produk.rating }}",
-      "bestRating": "5",
-      "worstRating": "1",
-      "reviewCount": "{{ produk.terjual }}"
-    }
-  }
-  </script>
+    </script>
 
-  <style>
-    body { background: #fdf4ff; font-family: 'Segoe UI', sans-serif; }
-    .navbar-brand { font-weight: 700; color: #a855f7 !important; }
-    .produk-box { background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 16px rgba(0,0,0,.07); }
-    .harga-besar { font-size: 1.8rem; font-weight: 700; color: #7c3aed; }
-    .badge-tipe { font-size: .8rem; padding: .35rem .75rem; border-radius: 20px; }
-    .badge-serum { background:#ede9fe;color:#7c3aed; }
-    .badge-toner { background:#fce7f3;color:#be185d; }
-    .btn-beli { background: linear-gradient(135deg,#e879a0,#a855f7); color: #fff; border: none; border-radius: 10px; font-size:1rem; padding: .65rem 1.5rem; }
-    .btn-beli:hover { opacity:.9;color:#fff; }
-    .info-row { display: flex; gap: 8px; align-items: flex-start; padding: .5rem 0; border-bottom: 1px solid #f3e8ff; font-size: .9rem; }
-    .info-label { color: #9ca3af; min-width: 120px; }
-    .semantic-box { background: #ede9fe; border-radius: 12px; padding: 1rem 1.25rem; font-size: .82rem; color: #5b21b6; }
-    .ingr-box { background: #f9fafb; border-radius: 10px; padding: 1rem; font-size: .8rem; color: #6b7280; max-height: 120px; overflow-y: auto; }
-    .card-rekomen { border: none; border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.06); transition: .2s; background: #fff; }
-    .card-rekomen:hover { transform: translateY(-3px); }
-  </style>
-</head>
-<body>
+    <style>
+      body {
+        background: #fdf4ff;
+        font-family: "Segoe UI", sans-serif;
+      }
+      .navbar-brand {
+        font-weight: 700;
+        color: #a855f7 !important;
+      }
+      .produk-box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+      }
+      .harga-besar {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #7c3aed;
+      }
+      .badge-tipe {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+      }
+      .badge-serum {
+        background: #ede9fe;
+        color: #7c3aed;
+      }
+      .badge-toner {
+        background: #fce7f3;
+        color: #be185d;
+      }
+      .btn-beli {
+        background: linear-gradient(135deg, #e879a0, #a855f7);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        padding: 0.65rem 1.5rem;
+      }
+      .btn-beli:hover {
+        opacity: 0.9;
+        color: #fff;
+      }
+      .info-row {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f3e8ff;
+        font-size: 0.9rem;
+      }
+      .info-label {
+        color: #9ca3af;
+        min-width: 120px;
+      }
+      .semantic-box {
+        background: #ede9fe;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        font-size: 0.82rem;
+        color: #5b21b6;
+      }
+      .ingr-box {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 1rem;
+        font-size: 0.8rem;
+        color: #6b7280;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+      .card-rekomen {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+        transition: 0.2s;
+        background: #fff;
+      }
+      .card-rekomen:hover {
+        transform: translateY(-3px);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
+      <a class="navbar-brand" href="/katalog">💄 Toko Kosmetik</a>
+      <div class="d-flex gap-2">
+        <a href="/cek-pesanan" class="btn btn-sm btn-outline-secondary"
+          >🔍 Cek Pesanan</a
+        ><a href="/katalog" class="btn btn-sm btn-outline-secondary"
+          >← Katalog</a
+        >
+      </div>
+    </nav>
 
-<nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
-  <a class="navbar-brand" href="/katalog">💄 Toko Kosmetik</a>
-  <div class="d-flex gap-2"><a href="/cek-pesanan" class="btn btn-sm btn-outline-secondary">🔍 Cek Pesanan</a><a href="/katalog" class="btn btn-sm btn-outline-secondary">← Katalog</a></div>
-</nav>
+    <div class="container py-4">
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb" style="font-size: 0.85rem">
+          <li class="breadcrumb-item">
+            <a href="/katalog" style="color: #a855f7">Katalog</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="/toko?tipe={{ produk.tipe }}" style="color: #a855f7"
+              >{{ produk.tipe|title }}</a
+            >
+          </li>
+          <li class="breadcrumb-item active">{{ produk.nama[:40] }}…</li>
+        </ol>
+      </nav>
 
-<div class="container py-4">
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb" style="font-size:.85rem">
-      <li class="breadcrumb-item"><a href="/katalog" style="color:#a855f7">Katalog</a></li>
-      <li class="breadcrumb-item"><a href="/toko?tipe={{ produk.tipe }}" style="color:#a855f7">{{ produk.tipe|title }}</a></li>
-      <li class="breadcrumb-item active">{{ produk.nama[:40] }}…</li>
-    </ol>
-  </nav>
+      <div class="row g-4">
+        <!-- Kiri: Info Produk -->
+        <div class="col-md-7">
+          <div class="produk-box">
+            <div
+              class="text-center mb-3"
+              style="
+                background: #fdf4ff;
+                border-radius: 12px;
+                padding: 1rem;
+                height: 220px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+              "
+            >
+              {% if produk.gambar %}
+              <img
+                src="/static/uploads/{{ produk.gambar }}"
+                style="
+                  max-width: 100%;
+                  max-height: 100%;
+                  object-fit: contain;
+                  border-radius: 8px;
+                "
+              />
+              {% else %}
+              <span style="font-size: 5rem"
+                >{% if produk.tipe == 'serum' %}🧪{% elif produk.tipe == 'toner'
+                %}💧{% else %}🫧{% endif %}</span
+              >
+              {% endif %}
+            </div>
+            <span
+              class="badge badge-{{ produk.tipe.replace(' ','') }} badge-tipe mb-2"
+              >{{ produk.tipe }}</span
+            >
+            <h2 class="fw-bold mb-1" style="font-size: 1.3rem">
+              {{ produk.nama }}
+            </h2>
+            <p class="text-muted small mb-3">
+              oleh <strong>{{ produk.brand }}</strong> • {{ produk.ukuran }}
+            </p>
 
-  <div class="row g-4">
-    <!-- Kiri: Info Produk -->
-    <div class="col-md-7">
-      <div class="produk-box">
-        <div class="text-center mb-3" style="font-size:5rem;background:#fdf4ff;border-radius:12px;padding:1.5rem">
-          {% if produk.tipe == 'serum' %}🧪{% elif produk.tipe == 'toner' %}💧{% else %}🫧{% endif %}
-        </div>
-        <span class="badge badge-{{ produk.tipe.replace(' ','') }} badge-tipe mb-2">{{ produk.tipe }}</span>
-        <h2 class="fw-bold mb-1" style="font-size:1.3rem">{{ produk.nama }}</h2>
-        <p class="text-muted small mb-3">oleh <strong>{{ produk.brand }}</strong> • {{ produk.ukuran }}</p>
+            <div class="harga-besar mb-1">
+              Rp {{ "{:,.0f}".format(produk.harga) }}
+            </div>
+            <div class="mb-3">
+              ⭐ {{ produk.rating }} &nbsp;|&nbsp;
+              <span class="text-muted small">{{ produk.terjual }} terjual</span>
+              &nbsp;|&nbsp;
+              <span
+                class="{% if produk.stok > 20 %}text-success{% else %}text-danger{% endif %} small"
+              >
+                Stok: {{ produk.stok }}
+              </span>
+            </div>
 
-        <div class="harga-besar mb-1">Rp {{ "{:,.0f}".format(produk.harga) }}</div>
-        <div class="mb-3">
-          ⭐ {{ produk.rating }} &nbsp;|&nbsp;
-          <span class="text-muted small">{{ produk.terjual }} terjual</span> &nbsp;|&nbsp;
-          <span class="{% if produk.stok > 20 %}text-success{% else %}text-danger{% endif %} small">
-            Stok: {{ produk.stok }}
-          </span>
-        </div>
-
-        <!-- Manfaat produk -->
-        {% if produk.deskripsi %}
-        <div class="mb-3">
-          <div class="fw-semibold small mb-2">✨ Manfaat Produk</div>
-          <ul class="list-unstyled" style="font-size:.88rem">
-            {% for manfaat in produk.deskripsi.split(',') %}
-            {% if manfaat.strip() %}
-            <li class="mb-1">✔️ {{ manfaat.strip() }}</li>
+            <!-- Manfaat produk -->
+            {% if produk.deskripsi %}
+            <div class="mb-3">
+              <div class="fw-semibold small mb-2">✨ Manfaat Produk</div>
+              <ul class="list-unstyled" style="font-size: 0.88rem">
+                {% for manfaat in produk.deskripsi.split(',') %} {% if
+                manfaat.strip() %}
+                <li class="mb-1">✔️ {{ manfaat.strip() }}</li>
+                {% endif %} {% endfor %}
+              </ul>
+            </div>
             {% endif %}
+
+            <a
+              href="/beli/{{ produk.id }}"
+              class="btn btn-beli w-100 mt-2 text-decoration-none d-block text-center"
+              >🛒 Beli Sekarang</a
+            >
+          </div>
+        </div>
+
+        <!-- Kanan: Info Detail + Semantic -->
+        <div class="col-md-5">
+          <!-- Info Detail -->
+          <div class="produk-box mb-3">
+            <div class="fw-semibold mb-2">📋 Informasi Produk</div>
+            <div class="info-row">
+              <span class="info-label">Brand</span
+              ><span>{{ produk.brand }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Kategori</span
+              ><span>{{ produk.tipe|title }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Ukuran</span
+              ><span>{{ produk.ukuran }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Harga</span
+              ><span class="fw-bold" style="color: #7c3aed"
+                >Rp {{ "{:,.0f}".format(produk.harga) }}</span
+              >
+            </div>
+            <div class="info-row">
+              <span class="info-label">Rating</span
+              ><span>⭐ {{ produk.rating }} / 5.0</span>
+            </div>
+            <div class="info-row" style="border: none">
+              <span class="info-label">BPOM ID</span>
+              <span
+                class="badge"
+                style="background: #f0fdf4; color: #166534; font-size: 0.75rem"
+                >✅ {{ produk.bpom_id }}</span
+              >
+            </div>
+          </div>
+
+          <!-- SEMANTIC WEB BOX -->
+          <div class="semantic-box mb-3">
+            <div class="fw-semibold mb-2">🌐 Data Semantik Produk Ini</div>
+            <p class="mb-1">
+              Halaman ini menggunakan <strong>Schema.org</strong> — standar
+              Semantic Web agar data bisa dibaca mesin:
+            </p>
+            <ul class="mb-2 ps-3" style="line-height: 1.8">
+              <li><code>@type: Product</code> → jenis entitas</li>
+              <li><code>brand</code> → merek produk</li>
+              <li><code>offers.price</code> → harga terstruktur</li>
+              <li><code>identifier</code> → ID BPOM</li>
+              <li><code>aggregateRating</code> → rating semantik</li>
+            </ul>
+            <a
+              href="/api/produk"
+              target="_blank"
+              style="color: #7c3aed; font-size: 0.8rem"
+              >🔗 Lihat semua data API JSON-LD →</a
+            >
+          </div>
+
+          <!-- Bahan/Ingredients -->
+          {% if produk.ingredients and produk.ingredients != 'nan' %}
+          <div class="produk-box">
+            <div class="fw-semibold small mb-2">🧬 Komposisi Bahan</div>
+            <div class="ingr-box">{{ produk.ingredients }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ULASAN PEMBELI -->
+      <div class="mt-5">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <h5 class="fw-bold mb-0">💬 Ulasan Pembeli</h5>
+          <span class="badge" style="background: #ede9fe; color: #7c3aed"
+            >{{ produk.reviews|length }} ulasan</span
+          >
+        </div>
+
+        {% if produk.reviews %}
+        <!-- Ringkasan Rating -->
+        <div
+          class="p-3 mb-4 d-flex align-items-center gap-4"
+          style="
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+          "
+        >
+          <div class="text-center" style="min-width: 80px">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #7c3aed">
+              {{ produk.rating }}
+            </div>
+            <div>{% for i in range(produk.rating|int) %}⭐{% endfor %}</div>
+            <div class="text-muted small">dari 5</div>
+          </div>
+          <div class="flex-grow-1">
+            {% for bintang in [5,4,3,2,1] %} {% set jml =
+            produk.reviews|selectattr('rating','equalto',bintang)|list|length %}
+            {% set pct = ((jml / produk.reviews|length) * 100)|int %}
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="small text-muted" style="min-width: 20px"
+                >{{ bintang }}⭐</span
+              >
+              <div
+                style="
+                  flex: 1;
+                  height: 8px;
+                  background: #f3e8ff;
+                  border-radius: 4px;
+                "
+              >
+                <div
+                  style="width:{{ pct }}%;height:100%;background:#a855f7;border-radius:4px"
+                ></div>
+              </div>
+              <span class="small text-muted" style="min-width: 24px"
+                >{{ jml }}</span
+              >
+            </div>
             {% endfor %}
-          </ul>
+          </div>
+        </div>
+
+        <!-- Daftar Ulasan -->
+        {% for r in produk.reviews %}
+        <div
+          class="mb-3 p-3"
+          style="
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+          "
+        >
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="fw-semibold">{{ r.nama }}</span>
+              <span class="ms-2"
+                >{% for i in range(r.rating) %}⭐{% endfor %}</span
+              >
+            </div>
+            <span class="text-muted small">{{ r.tanggal }}</span>
+          </div>
+          <p class="mb-0 mt-2 small" style="color: #374151; line-height: 1.6">
+            "{{ r.komentar }}"
+          </p>
+        </div>
+        {% endfor %} {% else %}
+        <div
+          class="text-center p-4 text-muted"
+          style="
+            background: #fff;
+            border-radius: 12px;
+            border: 2px dashed #e9d5ff;
+          "
+        >
+          <div style="font-size: 2rem">📝</div>
+          <p class="mt-2 mb-0">
+            Belum ada ulasan. Jadilah yang pertama mengulas produk ini!
+          </p>
         </div>
         {% endif %}
-
-        <a href="/beli/{{ produk.id }}" class="btn btn-beli w-100 mt-2 text-decoration-none d-block text-center">🛒 Beli Sekarang</a>
       </div>
-    </div>
 
-    <!-- Kanan: Info Detail + Semantic -->
-    <div class="col-md-5">
-      <!-- Info Detail -->
-      <div class="produk-box mb-3">
-        <div class="fw-semibold mb-2">📋 Informasi Produk</div>
-        <div class="info-row"><span class="info-label">Brand</span><span>{{ produk.brand }}</span></div>
-        <div class="info-row"><span class="info-label">Kategori</span><span>{{ produk.tipe|title }}</span></div>
-        <div class="info-row"><span class="info-label">Ukuran</span><span>{{ produk.ukuran }}</span></div>
-        <div class="info-row"><span class="info-label">Harga</span><span class="fw-bold" style="color:#7c3aed">Rp {{ "{:,.0f}".format(produk.harga) }}</span></div>
-        <div class="info-row"><span class="info-label">Rating</span><span>⭐ {{ produk.rating }} / 5.0</span></div>
-        <div class="info-row" style="border:none"><span class="info-label">BPOM ID</span>
-          <span class="badge" style="background:#f0fdf4;color:#166534;font-size:.75rem">✅ {{ produk.bpom_id }}</span>
+      <!-- Rekomendasi -->
+      {% if rekomendasi %}
+      <div class="mt-5">
+        <h5 class="fw-bold mb-3">🔁 Produk {{ produk.tipe|title }} Lainnya</h5>
+        <div class="row g-3">
+          {% for r in rekomendasi %}
+          <div class="col-6 col-md-3">
+            <a href="/produk/{{ r.id }}" class="text-decoration-none text-dark">
+              <div class="card-rekomen p-3 text-center">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem">
+                  {% if r.tipe=='serum' %}🧪{% elif r.tipe=='toner' %}💧{% else
+                  %}🫧{% endif %}
+                </div>
+                <div
+                  class="small fw-semibold"
+                  style="line-height: 1.3; font-size: 0.8rem"
+                >
+                  {{ r.nama[:45] }}{% if r.nama|length>45 %}…{% endif %}
+                </div>
+                <div class="text-muted" style="font-size: 0.75rem">
+                  {{ r.brand }}
+                </div>
+                <div
+                  class="mt-1 fw-bold"
+                  style="color: #7c3aed; font-size: 0.9rem"
+                >
+                  Rp {{ "{:,.0f}".format(r.harga) }}
+                </div>
+              </div>
+            </a>
+          </div>
+          {% endfor %}
         </div>
-      </div>
-
-      <!-- SEMANTIC WEB BOX -->
-      <div class="semantic-box mb-3">
-        <div class="fw-semibold mb-2">🌐 Data Semantik Produk Ini</div>
-        <p class="mb-1">Halaman ini menggunakan <strong>Schema.org</strong> — standar Semantic Web agar data bisa dibaca mesin:</p>
-        <ul class="mb-2 ps-3" style="line-height:1.8">
-          <li><code>@type: Product</code> → jenis entitas</li>
-          <li><code>brand</code> → merek produk</li>
-          <li><code>offers.price</code> → harga terstruktur</li>
-          <li><code>identifier</code> → ID BPOM</li>
-          <li><code>aggregateRating</code> → rating semantik</li>
-        </ul>
-        <a href="/api/produk" target="_blank" style="color:#7c3aed;font-size:.8rem">🔗 Lihat semua data API JSON-LD →</a>
-      </div>
-
-      <!-- Bahan/Ingredients -->
-      {% if produk.ingredients and produk.ingredients != 'nan' %}
-      <div class="produk-box">
-        <div class="fw-semibold small mb-2">🧬 Komposisi Bahan</div>
-        <div class="ingr-box">{{ produk.ingredients }}</div>
       </div>
       {% endif %}
     </div>
-  </div>
 
-
-  <!-- ULASAN PEMBELI -->
-  <div class="mt-5">
-    <div class="d-flex align-items-center gap-3 mb-3">
-      <h5 class="fw-bold mb-0">💬 Ulasan Pembeli</h5>
-      <span class="badge" style="background:#ede9fe;color:#7c3aed">{{ produk.reviews|length }} ulasan</span>
-    </div>
-
-    {% if produk.reviews %}
-    <!-- Ringkasan Rating -->
-    <div class="p-3 mb-4 d-flex align-items-center gap-4"
-         style="background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,.06)">
-      <div class="text-center" style="min-width:80px">
-        <div style="font-size:2.5rem;font-weight:700;color:#7c3aed">{{ produk.rating }}</div>
-        <div>{% for i in range(produk.rating|int) %}⭐{% endfor %}</div>
-        <div class="text-muted small">dari 5</div>
-      </div>
-      <div class="flex-grow-1">
-        {% for bintang in [5,4,3,2,1] %}
-        {% set jml = produk.reviews|selectattr('rating','equalto',bintang)|list|length %}
-        {% set pct = ((jml / produk.reviews|length) * 100)|int %}
-        <div class="d-flex align-items-center gap-2 mb-1">
-          <span class="small text-muted" style="min-width:20px">{{ bintang }}⭐</span>
-          <div style="flex:1;height:8px;background:#f3e8ff;border-radius:4px">
-            <div style="width:{{ pct }}%;height:100%;background:#a855f7;border-radius:4px"></div>
-          </div>
-          <span class="small text-muted" style="min-width:24px">{{ jml }}</span>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Daftar Ulasan -->
-    {% for r in produk.reviews %}
-    <div class="mb-3 p-3" style="background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.05)">
-      <div class="d-flex justify-content-between align-items-start">
-        <div>
-          <span class="fw-semibold">{{ r.nama }}</span>
-          <span class="ms-2">{% for i in range(r.rating) %}⭐{% endfor %}</span>
-        </div>
-        <span class="text-muted small">{{ r.tanggal }}</span>
-      </div>
-      <p class="mb-0 mt-2 small" style="color:#374151;line-height:1.6">
-        "{{ r.komentar }}"
-      </p>
-    </div>
-    {% endfor %}
-
-    {% else %}
-    <div class="text-center p-4 text-muted"
-         style="background:#fff;border-radius:12px;border:2px dashed #e9d5ff">
-      <div style="font-size:2rem">📝</div>
-      <p class="mt-2 mb-0">Belum ada ulasan. Jadilah yang pertama mengulas produk ini!</p>
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- Rekomendasi -->
-  {% if rekomendasi %}
-  <div class="mt-5">
-    <h5 class="fw-bold mb-3">🔁 Produk {{ produk.tipe|title }} Lainnya</h5>
-    <div class="row g-3">
-      {% for r in rekomendasi %}
-      <div class="col-6 col-md-3">
-        <a href="/produk/{{ r.id }}" class="text-decoration-none text-dark">
-          <div class="card-rekomen p-3 text-center">
-            <div style="font-size:2rem;margin-bottom:.5rem">
-              {% if r.tipe=='serum' %}🧪{% elif r.tipe=='toner' %}💧{% else %}🫧{% endif %}
-            </div>
-            <div class="small fw-semibold" style="line-height:1.3;font-size:.8rem">{{ r.nama[:45] }}{% if r.nama|length>45 %}…{% endif %}</div>
-            <div class="text-muted" style="font-size:.75rem">{{ r.brand }}</div>
-            <div class="mt-1 fw-bold" style="color:#7c3aed;font-size:.9rem">Rp {{ "{:,.0f}".format(r.harga) }}</div>
-          </div>
-        </a>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
 </html>

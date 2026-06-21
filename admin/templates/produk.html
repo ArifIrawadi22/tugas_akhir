@@ -34,8 +34,20 @@
       {% for p in produk %}
       <tr>
         <td style="max-width:180px">
-          <div class="fw-semibold small">{{ p.nama[:45] }}{% if p.nama|length > 45 %}…{% endif %}</div>
+          <div class="d-flex gap-2 align-items-center">
+            <div style="width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;
+                        background:#fdf4ff;display:flex;align-items:center;justify-content:center">
+              {% if p.gambar %}
+              <img src="/static/uploads/{{ p.gambar }}" style="width:100%;height:100%;object-fit:cover">
+              {% else %}
+              <span style="font-size:1.1rem">{% if p.tipe=='serum' %}🧪{% elif p.tipe=='toner' %}💧{% else %}🫧{% endif %}</span>
+              {% endif %}
+            </div>
+            <div>
+              <div class="fw-semibold small">{{ p.nama[:45] }}{% if p.nama|length > 45 %}…{% endif %}</div>
           <div class="text-muted" style="font-size:.75rem">{{ p.deskripsi[:60] }}{% if p.deskripsi|length > 60 %}…{% endif %}</div>
+            </div>
+          </div>
         </td>
         <td><span class="badge bg-light text-dark">{{ p.brand }}</span></td>
         <td>
@@ -72,9 +84,14 @@
         <h5 class="modal-title fw-bold">➕ Tambah Produk Baru</h5>
         <button class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form action="/produk/tambah" method="POST">
+      <form action="/produk/tambah" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Foto Produk</label>
+              <input type="file" name="gambar" class="form-control" accept=".png,.jpg,.jpeg,.webp,.jfif">
+              <div class="text-muted small mt-1">Opsional — Format JPG, PNG, WEBP, JFIF</div>
+            </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Brand</label>
               <input name="brand" class="form-control" required>

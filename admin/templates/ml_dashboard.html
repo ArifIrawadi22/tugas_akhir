@@ -10,6 +10,8 @@
     ('sentimen','Analisis Sentimen','💬'),
     ('clustering','Segmen Produk','📊'),
     ('prediksi','Prediksi Penjualan','📈'),
+    ('stok','Prediksi Stok','📦'),
+    ('rincian','Rincian per Bulan','🗓️'),
     ('rdf','Knowledge Graph','🌐')
   ] %}
   <a href="?tab={{ tab_id }}"
@@ -277,6 +279,150 @@ new Chart(document.getElementById('chartPrediksi'), {
 <!-- ============================================ -->
 <!-- TAB 5: KNOWLEDGE GRAPH RDF                   -->
 <!-- ============================================ -->
+
+<!-- ============================================ -->
+<!-- TAB 6: PREDIKSI STOK PER PRODUK              -->
+<!-- ============================================ -->
+{% elif tab == 'stok' %}
+{% set jml_restock = stok_data|selectattr('status','equalto','PERLU RESTOCK')|list|length %}
+{% set jml_kelebihan = stok_data|selectattr('status','equalto','KELEBIHAN STOK')|list|length %}
+{% set jml_aman = stok_data|selectattr('status','equalto','Stok Aman')|list|length %}
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card-stat text-center" style="border-left:4px solid #dc2626">
+      <div style="font-size:2rem">🔴</div>
+      <div class="fs-2 fw-bold" style="color:#dc2626">{{ jml_restock }}</div>
+      <div class="text-muted small">Produk PERLU RESTOCK</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card-stat text-center" style="border-left:4px solid #15803d">
+      <div style="font-size:2rem">🟢</div>
+      <div class="fs-2 fw-bold" style="color:#15803d">{{ jml_aman }}</div>
+      <div class="text-muted small">Stok Aman</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card-stat text-center" style="border-left:4px solid #0369a1">
+      <div style="font-size:2rem">🔵</div>
+      <div class="fs-2 fw-bold" style="color:#0369a1">{{ jml_kelebihan }}</div>
+      <div class="text-muted small">KELEBIHAN STOK</div>
+    </div>
+  </div>
+</div>
+
+<div class="card-stat mb-3">
+  <div class="fw-semibold mb-1">📦 Prediksi Kebutuhan Stok Bulan Depan</div>
+  <div class="text-muted small mb-3">Berdasarkan tren penjualan historis — supaya stok tidak kurang maupun berlebihan</div>
+
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr>
+        <th>Produk</th><th>Tipe</th><th>Stok Sekarang</th><th>Prediksi Terjual</th>
+        <th>Tren</th><th>Rekomendasi Beli</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+      {% for s in stok_data %}
+      <tr>
+        <td>
+          <div class="fw-semibold small">{{ s.nama[:40] }}{% if s.nama|length > 40 %}…{% endif %}</div>
+          <div class="text-muted" style="font-size:.75rem">{{ s.brand }}</div>
+        </td>
+        <td><span class="badge" style="font-size:.7rem;background:#ede9fe;color:#7c3aed">{{ s.tipe }}</span></td>
+        <td class="fw-semibold">{{ s.stok_sekarang }}</td>
+        <td>{{ s.prediksi_terjual }} unit</td>
+        <td class="small">{{ s.tren }}</td>
+        <td>
+          {% if s.rekomendasi_beli > 0 %}
+          <span class="fw-bold" style="color:#dc2626">+{{ s.rekomendasi_beli }} unit</span>
+          {% else %}
+          <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="badge" style="font-size:.72rem;
+            {% if s.warna=='danger' %}background:#fee2e2;color:#991b1b
+            {% elif s.warna=='warning' %}background:#fef9c3;color:#854d0e
+            {% elif s.warna=='success' %}background:#dcfce7;color:#166534
+            {% elif s.warna=='info' %}background:#dbeafe;color:#1e40af
+            {% else %}background:#f3f4f6;color:#6b7280{% endif %}">
+            {{ s.status }}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TAB 7: RINCIAN PENJUALAN PER BULAN           -->
+<!-- ============================================ -->
+{% elif tab == 'rincian' %}
+<div class="card-stat mb-3">
+  <div class="fw-semibold mb-1">🗓️ Rincian Penjualan dari Bulan ke Bulan</div>
+  <div class="text-muted small">Produk terlaris dan omzet di setiap bulan, dari awal data hingga sekarang</div>
+</div>
+
+{% for bln in rincian_bulan %}
+<div class="card-stat mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <div class="fw-bold" style="font-size:1.05rem;color:#7c3aed">{{ bln.label }}</div>
+    <div class="d-flex gap-3">
+      <div class="text-center">
+        <div class="fw-bold" style="color:#15803d">Rp {{ "{:,.0f}".format(bln.total_omzet) }}</div>
+        <div class="text-muted" style="font-size:.7rem">Total Omzet</div>
+      </div>
+      <div class="text-center">
+        <div class="fw-bold">{{ bln.total_unit }}</div>
+        <div class="text-muted" style="font-size:.7rem">Unit Terjual</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Per kategori -->
+    <div class="col-md-4">
+      <div class="small fw-semibold text-muted mb-2">PER KATEGORI</div>
+      {% for k in bln.kategori %}
+      <div class="d-flex justify-content-between align-items-center mb-2 p-2"
+           style="background:{% if k.tipe=='serum' %}#ede9fe{% elif k.tipe=='toner' %}#fce7f3{% else %}#e0f2fe{% endif %};border-radius:8px">
+        <span class="small fw-semibold">{{ k.tipe|title }}</span>
+        <div class="text-end">
+          <div class="small fw-bold">{{ k.unit }} unit</div>
+          <div class="text-muted" style="font-size:.7rem">Rp {{ "{:,.0f}".format(k.omzet) }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Produk terlaris -->
+    <div class="col-md-8">
+      <div class="small fw-semibold text-muted mb-2">PRODUK TERLARIS BULAN INI</div>
+      <table class="table table-sm mb-0">
+        <tbody>
+        {% for p in bln.produk_terlaris %}
+        <tr>
+          <td class="small" style="width:50%">
+            <span class="fw-semibold">{{ p.nama[:35] }}{% if p.nama|length > 35 %}…{% endif %}</span>
+            <span class="text-muted"> — {{ p.brand }}</span>
+          </td>
+          <td class="small text-center">
+            <span class="badge" style="font-size:.7rem;background:#f3f4f6;color:#374151">{{ p.tipe }}</span>
+          </td>
+          <td class="small text-center fw-bold">{{ p.unit }}x</td>
+          <td class="small text-end fw-semibold" style="color:#15803d">Rp {{ "{:,.0f}".format(p.omzet) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
 {% elif tab == 'rdf' %}
 <div class="row g-3 mb-4">
   <div class="col-md-4">

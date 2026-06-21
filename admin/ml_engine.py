@@ -401,3 +401,218 @@ if __name__ == '__main__':
     print("\n[5] Knowledge Graph")
     kg = buat_knowledge_graph()
     print(f"  → {kg['triple_count']} triple RDF dari {kg['produk_count']} produk")
+
+
+# =============================================
+# 6. PREDIKSI STOK PER PRODUK (BULAN DEPAN)
+# =============================================
+def prediksi_stok_produk():
+    """
+    Prediksi berapa unit tiap produk akan terjual bulan depan,
+    dibandingkan dengan stok saat ini.
+    Menggunakan rata-rata tren penjualan 3 bulan terakhir + regresi sederhana.
+    Output: rekomendasi RESTOCK / AMAN / KELEBIHAN STOK
+    """
+    from sklearn.linear_model import LinearRegression
+
+    conn = get_conn()
+    df_trans = pd.read_sql("""
+        SELECT t.produk_id, t.tanggal, t.jumlah
+        FROM transaksi t ORDER BY t.tanggal
+    """, conn)
+    df_produk = pd.read_sql("SELECT id, nama, brand, tipe, harga, stok FROM produk", conn)
+
+    # Tambahkan juga penjualan dari pesanan user (real time)
+    try:
+        df_pesanan_item = pd.read_sql("""
+            SELECT pi.produk_id, p.tanggal, pi.jumlah
+            FROM pesanan_item pi JOIN pesanan p ON pi.pesanan_id = p.id
+            WHERE p.status != 'Dibatalkan'
+        """, conn)
+        # Ekstrak tahun-bulan dari format "19 Jun 2026 03:33"
+        bulan_id = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','Mei':'05','Jun':'06',
+                    'Jul':'07','Ags':'08','Sep':'09','Okt':'10','Nov':'11','Des':'12'}
+        def parse_bulan(s):
+            try:
+                parts = s.split()
+                bln = bulan_id.get(parts[1], '01')
+                return f"{parts[2]}-{bln}"
+            except:
+                return None
+        if not df_pesanan_item.empty:
+            df_pesanan_item['tanggal'] = df_pesanan_item['tanggal'].apply(parse_bulan)
+            df_pesanan_item = df_pesanan_item.dropna(subset=['tanggal'])
+            df_pesanan_item = df_pesanan_item.rename(columns={'jumlah':'jumlah'})
+            df_trans = pd.concat([df_trans, df_pesanan_item[['produk_id','tanggal','jumlah']]], ignore_index=True)
+    except Exception:
+        pass
+
+    conn.close()
+
+    if df_trans.empty:
+        return []
+
+    hasil = []
+    bulan_unik = sorted(df_trans['tanggal'].unique())
+    bulan_terakhir_3 = bulan_unik[-3:] if len(bulan_unik) >= 3 else bulan_unik
+
+    for _, prod in df_produk.iterrows():
+        pid = prod['id']
+        data_produk = df_trans[df_trans['produk_id'] == pid].groupby('tanggal')['jumlah'].sum().reset_index()
+        data_produk = data_produk.sort_values('tanggal')
+
+        if len(data_produk) == 0:
+            prediksi_unit = 0
+            tren = 'Belum ada data'
+        elif len(data_produk) == 1:
+            prediksi_unit = int(data_produk['jumlah'].iloc[0])
+            tren = 'Data terbatas'
+        else:
+            # Regresi sederhana pakai urutan bulan
+            data_produk['bulan_ke'] = range(1, len(data_produk)+1)
+            X = data_produk[['bulan_ke']]
+            y = data_produk['jumlah']
+            try:
+                model = LinearRegression()
+                model.fit(X, y)
+                pred = model.predict(pd.DataFrame({'bulan_ke':[len(data_produk)+1]}))[0]
+                prediksi_unit = max(0, int(round(pred)))
+                rata2_lama = data_produk['jumlah'].mean()
+                if prediksi_unit > rata2_lama * 1.15:
+                    tren = 'Naik 📈'
+                elif prediksi_unit < rata2_lama * 0.85:
+                    tren = 'Turun 📉'
+                else:
+                    tren = 'Stabil ➡️'
+            except Exception:
+                prediksi_unit = int(data_produk['jumlah'].mean())
+                tren = 'Stabil ➡️'
+
+        stok_sekarang = int(prod['stok'])
+        selisih = stok_sekarang - prediksi_unit
+
+        if prediksi_unit == 0:
+            status, warna = 'Tidak Perlu Restock', 'gray'
+        elif selisih < 0:
+            status, warna = 'PERLU RESTOCK', 'danger'
+        elif selisih < prediksi_unit * 0.3:
+            status, warna = 'Stok Pas-pasan', 'warning'
+        elif selisih > prediksi_unit * 2:
+            status, warna = 'KELEBIHAN STOK', 'info'
+        else:
+            status, warna = 'Stok Aman', 'success'
+
+        hasil.append({
+            'id': int(pid),
+            'nama': prod['nama'],
+            'brand': prod['brand'],
+            'tipe': prod['tipe'],
+            'harga': float(prod['harga']),
+            'stok_sekarang': stok_sekarang,
+            'prediksi_terjual': prediksi_unit,
+            'tren': tren,
+            'selisih': selisih,
+            'rekomendasi_beli': max(0, prediksi_unit - stok_sekarang + 5),  # +5 buffer aman
+            'status': status,
+            'warna': warna
+        })
+
+    # Urutkan: yang perlu restock duluan
+    urutan_prioritas = {'PERLU RESTOCK':0, 'Stok Pas-pasan':1, 'Stok Aman':2, 'KELEBIHAN STOK':3, 'Tidak Perlu Restock':4}
+    hasil.sort(key=lambda x: urutan_prioritas.get(x['status'], 5))
+    return hasil
+
+
+# =============================================
+# 7. RINCIAN PRODUK TERLARIS PER BULAN
+# =============================================
+def rincian_penjualan_per_bulan():
+    """
+    Breakdown lengkap per bulan (Jan 2024 - sekarang):
+    - Total omzet bulan itu
+    - Per kategori (serum/toner/facial wash): unit terjual & omzet
+    - Produk terlaris di bulan itu
+    """
+    conn = get_conn()
+    df_trans = pd.read_sql("""
+        SELECT t.tanggal, t.produk_id, t.jumlah, t.total, p.nama, p.brand, p.tipe
+        FROM transaksi t JOIN produk p ON t.produk_id = p.id
+    """, conn)
+
+    # Gabung juga dengan pesanan user real (2026 dst)
+    try:
+        df_pesanan = pd.read_sql("""
+            SELECT p.tanggal as tgl_pesanan, pi.produk_id, pi.jumlah,
+                   (pi.jumlah * pi.harga_saat) as total, pr.nama, pr.brand, pr.tipe
+            FROM pesanan_item pi
+            JOIN pesanan p ON pi.pesanan_id = p.id
+            JOIN produk pr ON pi.produk_id = pr.id
+            WHERE p.status != 'Dibatalkan'
+        """, conn)
+        bulan_id = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','Mei':'05','Jun':'06',
+                    'Jul':'07','Ags':'08','Sep':'09','Okt':'10','Nov':'11','Des':'12'}
+        def parse_bulan(s):
+            try:
+                parts = s.split()
+                bln = bulan_id.get(parts[1], '01')
+                return f"{parts[2]}-{bln}"
+            except:
+                return None
+        if not df_pesanan.empty:
+            df_pesanan['tanggal'] = df_pesanan['tgl_pesanan'].apply(parse_bulan)
+            df_pesanan = df_pesanan.dropna(subset=['tanggal'])
+            df_trans = pd.concat([
+                df_trans,
+                df_pesanan[['tanggal','produk_id','jumlah','total','nama','brand','tipe']]
+            ], ignore_index=True)
+    except Exception:
+        pass
+
+    conn.close()
+
+    if df_trans.empty:
+        return []
+
+    bulan_map = {'01':'Januari','02':'Februari','03':'Maret','04':'April',
+                 '05':'Mei','06':'Juni','07':'Juli','08':'Agustus',
+                 '09':'September','10':'Oktober','11':'November','12':'Desember'}
+
+    hasil = []
+    for bulan in sorted(df_trans['tanggal'].unique()):
+        df_bulan = df_trans[df_trans['tanggal'] == bulan]
+        total_omzet = float(df_bulan['total'].sum())
+        total_unit = int(df_bulan['jumlah'].sum())
+
+        # Per kategori
+        per_kategori = df_bulan.groupby('tipe').agg(
+            unit=('jumlah','sum'), omzet=('total','sum')
+        ).reset_index().sort_values('omzet', ascending=False)
+        kategori_list = [{
+            'tipe': row['tipe'],
+            'unit': int(row['unit']),
+            'omzet': float(row['omzet'])
+        } for _, row in per_kategori.iterrows()]
+
+        # Produk terlaris bulan ini (top 5)
+        per_produk = df_bulan.groupby(['nama','brand','tipe']).agg(
+            unit=('jumlah','sum'), omzet=('total','sum')
+        ).reset_index().sort_values('unit', ascending=False).head(5)
+        produk_terlaris = [{
+            'nama': row['nama'],
+            'brand': row['brand'],
+            'tipe': row['tipe'],
+            'unit': int(row['unit']),
+            'omzet': float(row['omzet'])
+        } for _, row in per_produk.iterrows()]
+
+        thn, bln = bulan.split('-')
+        hasil.append({
+            'kode_bulan': bulan,
+            'label': f"{bulan_map.get(bln, bln)} {thn}",
+            'total_omzet': total_omzet,
+            'total_unit': total_unit,
+            'kategori': kategori_list,
+            'produk_terlaris': produk_terlaris
+        })
+
+    return list(reversed(hasil))  # Terbaru duluan

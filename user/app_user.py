@@ -37,6 +37,7 @@ class Produk(db.Model):
     url         = db.Column(db.String(300))
     deskripsi   = db.Column(db.Text)
     ingredients = db.Column(db.Text)
+    gambar      = db.Column(db.String(200))
 
 class Pesanan(db.Model):
     id           = db.Column(db.Integer, primary_key=True)
@@ -159,6 +160,13 @@ def beri_rating(kode):
         return redirect(f'/rating/{kode}?sukses=1')
     return render_template('rating.html', pesanan=pesanan,
                            sudah=sudah, sukses=request.args.get('sukses'))
+    
+@app.route('/static/uploads/<filename>')
+def gambar_produk(filename):
+    """Serve gambar produk dari folder admin (database & gambar dibagi bersama)"""
+    from flask import send_from_directory
+    folder_gambar = os.path.join(BASE_DIR, '..', 'admin', 'static', 'uploads')
+    return send_from_directory(folder_gambar, filename)
 # ============================================================
 # Tambahkan route ini ke app_user.py
 # Letakkan setelah route /cek-pesanan yang sudah ada
