@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Keranjang Belanja – Toko Kosmetik</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #fdf4ff; padding-top: 70px; font-family: 'Segoe UI', sans-serif; }
+
+    /* ===== Navbar (sama dengan katalog) ===== */
+    .glass-navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(255,255,255,0.2); backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .glass-navbar .navbar-brand { color: #7c3aed !important; font-weight: 700; }
+
+    /* ===== Layout keranjang ===== */
+    .cart-wrapper { max-width: 960px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    .page-title {
+      font-size: 1.6rem; font-weight: 800; color: #3b0764;
+      display: flex; align-items: center; gap: .6rem; margin-bottom: 1.5rem;
+    }
+    .page-title .badge-count {
+      background: linear-gradient(135deg,#e879a0,#a855f7);
+      color: #fff; font-size: .8rem; font-weight: 700;
+      border-radius: 20px; padding: .25rem .7rem;
+    }
+
+    /* ===== Item kartu ===== */
+    .cart-item {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(168,85,247,.07);
+      padding: 1rem 1.25rem; margin-bottom: .85rem;
+      display: flex; align-items: center; gap: 1rem;
+      transition: box-shadow .2s;
+    }
+    .cart-item:hover { box-shadow: 0 6px 20px rgba(168,85,247,.14); }
+
+    .item-icon {
+      font-size: 2.2rem; background: #fdf4ff;
+      border-radius: 10px; width: 56px; height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .item-info { flex: 1; min-width: 0; }
+    .item-brand { font-size: .72rem; color: #a855f7; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .item-nama { font-size: .92rem; font-weight: 700; color: #1f2937; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-satuan { font-size: .75rem; color: #9ca3af; margin-top: 2px; }
+
+    /* Qty stepper */
+    .qty-stepper { display: flex; align-items: center; gap: 0; border: 1.5px solid #e9d5ff; border-radius: 8px; overflow: hidden; }
+    .qty-btn {
+      background: #fdf4ff; border: none; width: 32px; height: 32px;
+      font-size: 1rem; font-weight: 700; color: #7c3aed; cursor: pointer;
+      transition: background .15s;
+    }
+    .qty-btn:hover { background: #ede9fe; }
+    .qty-val {
+      width: 38px; text-align: center; font-size: .9rem;
+      font-weight: 700; color: #3b0764; border: none;
+      background: transparent; outline: none;
+    }
+
+    .item-subtotal { font-size: 1rem; font-weight: 800; color: #7c3aed; min-width: 100px; text-align: right; white-space: nowrap; }
+
+    .btn-hapus {
+      background: none; border: none; color: #f87171; font-size: 1.1rem;
+      cursor: pointer; padding: .25rem; border-radius: 6px; transition: background .15s;
+    }
+    .btn-hapus:hover { background: #fef2f2; }
+
+    /* ===== Empty state ===== */
+    .empty-state {
+      text-align: center; padding: 5rem 1rem;
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(168,85,247,.07);
+    }
+    .empty-state .empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .empty-state h5 { color: #3b0764; font-weight: 700; }
+    .empty-state p { color: #9ca3af; font-size: .9rem; }
+
+    /* ===== Panel ringkasan ===== */
+    .summary-card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(168,85,247,.1);
+      padding: 1.5rem; position: sticky; top: 82px;
+    }
+    .summary-title { font-size: 1rem; font-weight: 800; color: #3b0764; margin-bottom: 1.2rem; }
+    .summary-row { display: flex; justify-content: space-between; font-size: .88rem; color: #4b5563; margin-bottom: .6rem; }
+    .summary-row.total { font-weight: 800; color: #3b0764; font-size: 1.05rem; border-top: 1.5px solid #ede9fe; padding-top: .8rem; margin-top: .4rem; }
+    .summary-row .val { color: #7c3aed; font-weight: 700; }
+    .summary-row.total .val { font-size: 1.15rem; }
+
+    .btn-checkout {
+      background: linear-gradient(135deg,#e879a0,#a855f7);
+      color: #fff; border: none; border-radius: 10px;
+      font-weight: 700; font-size: 1rem; padding: .75rem;
+      width: 100%; margin-top: 1rem; transition: opacity .2s;
+    }
+    .btn-checkout:hover { opacity: .88; color: #fff; }
+    .btn-checkout:disabled { opacity: .45; cursor: not-allowed; }
+
+    .btn-lanjut-belanja {
+      display: block; text-align: center; margin-top: .75rem;
+      color: #a855f7; font-size: .85rem; text-decoration: none;
+    }
+    .btn-lanjut-belanja:hover { text-decoration: underline; color: #7c3aed; }
+
+    .promo-input { border-radius: 8px; border: 1.5px solid #e9d5ff; }
+    .promo-input:focus { border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,.1); }
+
+    /* ===== Animasi hapus ===== */
+    .cart-item.removing {
+      animation: slideOut .3s ease forwards;
+    }
+    @keyframes slideOut {
+      to { opacity: 0; transform: translateX(30px); max-height: 0; padding: 0; margin: 0; }
+    }
+
+    /* ===== Notif toast ===== */
+    .toast-cart {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #3b0764; color: #fff; border-radius: 10px;
+      padding: .7rem 1.2rem; font-size: .85rem; font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 9999;
+      transform: translateY(80px); opacity: 0;
+      transition: transform .3s, opacity .3s;
+    }
+    .toast-cart.show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg glass-navbar px-4 py-2">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+      <img src="/static/img/download.png" alt="Logo" width="35" height="35"
+           onerror="this.style.display='none'">
+      𝓉ℴ𝓀ℴ 𝓀ℴ𝓈𝓂ℯ𝓉𝒾𝓀
+    </a>
+    <div class="ms-auto d-flex gap-2 align-items-center">
+      <a href="/katalog" class="btn btn-sm btn-outline-secondary" style="border-radius:20px">← Katalog</a>
+      <a href="/cek-pesanan" class="btn btn-sm btn-outline-secondary" style="border-radius:20px">🔍 Cek Pesanan</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="cart-wrapper">
+  <div class="page-title">
+    🛒 Keranjang Belanja
+    <span class="badge-count" id="badgeCount">0 item</span>
+  </div>
+
+  <div class="row g-4">
+    <!-- Kolom kiri: daftar item -->
+    <div class="col-lg-8" id="cartList">
+      <!-- Diisi JS -->
+    </div>
+
+    <!-- Kolom kanan: ringkasan -->
+    <div class="col-lg-4">
+      <div class="summary-card">
+        <div class="summary-title">💳 Ringkasan Pesanan</div>
+
+        <div class="summary-row">
+          <span>Subtotal (<span id="sumQty">0</span> item)</span>
+          <span class="val" id="sumSubtotal">Rp 0</span>
+        </div>
+        <div class="summary-row">
+          <span>Ongkos kirim</span>
+          <span class="val" id="sumOngkir">Rp 0</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total</span>
+          <span class="val" id="sumTotal">Rp 0</span>
+        </div>
+
+        <button class="btn-checkout" id="btnCheckout" disabled onclick="checkout()">
+          Lanjut ke Pembayaran →
+        </button>
+        <a href="/katalog" class="btn-lanjut-belanja">+ Tambah produk lain</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notifikasi -->
+<div class="toast-cart" id="toastCart">✅ Item dihapus dari keranjang</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ============================================================
+// KERANJANG — berbasis localStorage
+// Key: "keranjang" → array of { id, nama, brand, tipe, harga, stok, qty }
+// ============================================================
+
+const ONGKIR_THRESHOLD = 200000; // Gratis ongkir di atas 200rb
+const ONGKIR_FEE      = 15000;
+
+function getKeranjang() {
+  try { return JSON.parse(localStorage.getItem('keranjang') || '[]'); }
+  catch { return []; }
+}
+function saveKeranjang(data) {
+  localStorage.setItem('keranjang', JSON.stringify(data));
+}
+
+function formatRp(n) {
+  return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+}
+
+function ikon(tipe) {
+  if (!tipe) return '💄';
+  const t = tipe.toLowerCase();
+  if (t.includes('serum'))        return '🧪';
+  if (t.includes('toner'))        return '💧';
+  if (t.includes('facial'))       return '🫧';
+  if (t.includes('moisturizer'))  return '🧴';
+  if (t.includes('sunscreen'))    return '🌞';
+  return '💄';
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toastCart');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function render() {
+  const keranjang = getKeranjang();
+  const list      = document.getElementById('cartList');
+  const total_qty = keranjang.reduce((s, x) => s + x.qty, 0);
+  const subtotal  = keranjang.reduce((s, x) => s + x.qty * x.harga, 0);
+  const ongkir    = subtotal > 0 && subtotal < ONGKIR_THRESHOLD ? ONGKIR_FEE : 0;
+  const total     = subtotal + ongkir;
+
+  // Badge
+  document.getElementById('badgeCount').textContent =
+    total_qty + ' item';
+
+  // Summary
+  document.getElementById('sumQty').textContent      = total_qty;
+  document.getElementById('sumSubtotal').textContent = formatRp(subtotal);
+  document.getElementById('sumOngkir').textContent   =
+    ongkir === 0 && subtotal > 0 ? '🎉 Gratis' : formatRp(ongkir);
+  document.getElementById('sumTotal').textContent    = formatRp(total);
+  document.getElementById('btnCheckout').disabled    = keranjang.length === 0;
+
+  // List
+  if (keranjang.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🛒</div>
+        <h5>Keranjang masih kosong</h5>
+        <p>Yuk temukan produk skincare favoritmu!</p>
+        <a href="/katalog" class="btn btn-sm mt-2"
+           style="background:linear-gradient(135deg,#e879a0,#a855f7);color:#fff;border-radius:20px;padding:.5rem 1.5rem;font-weight:600">
+          Mulai Belanja
+        </a>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = keranjang.map((item, idx) => `
+    <div class="cart-item" id="item-${idx}">
+      <div class="item-icon">${ikon(item.tipe)}</div>
+      <div class="item-info">
+        <div class="item-brand">${item.brand || ''}</div>
+        <div class="item-nama" title="${item.nama}">${item.nama}</div>
+        <div class="item-satuan">${formatRp(item.harga)} / pcs</div>
+      </div>
+      <div class="qty-stepper">
+        <button class="qty-btn" onclick="ubahQty(${idx}, -1)">−</button>
+        <span class="qty-val">${item.qty}</span>
+        <button class="qty-btn" onclick="ubahQty(${idx}, +1)">+</button>
+      </div>
+      <div class="item-subtotal">${formatRp(item.qty * item.harga)}</div>
+      <button class="btn-hapus" title="Hapus" onclick="hapusItem(${idx})">🗑</button>
+    </div>
+  `).join('');
+
+  // Gratis ongkir progress
+  if (subtotal < ONGKIR_THRESHOLD && subtotal > 0) {
+    const pct  = Math.min(100, Math.round(subtotal / ONGKIR_THRESHOLD * 100));
+    const sisa = formatRp(ONGKIR_THRESHOLD - subtotal);
+    const bar  = `
+      <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;
+                  box-shadow:0 2px 12px rgba(168,85,247,.07);margin-top:.5rem">
+        <div style="font-size:.8rem;color:#7c3aed;font-weight:600;margin-bottom:.5rem">
+          🚚 Tambah ${sisa} lagi untuk gratis ongkir!
+        </div>
+        <div style="background:#ede9fe;border-radius:20px;height:8px;overflow:hidden">
+          <div style="background:linear-gradient(135deg,#e879a0,#a855f7);
+                      width:${pct}%;height:100%;border-radius:20px;transition:width .4s"></div>
+        </div>
+      </div>`;
+    list.insertAdjacentHTML('beforeend', bar);
+  } else if (subtotal >= ONGKIR_THRESHOLD) {
+    list.insertAdjacentHTML('beforeend', `
+      <div style="background:#f0fdf4;border-radius:12px;padding:.75rem 1.25rem;
+                  margin-top:.5rem;color:#166534;font-size:.82rem;font-weight:600">
+        🎉 Selamat! Kamu dapat gratis ongkos kirim.
+      </div>`);
+  }
+}
+
+function ubahQty(idx, delta) {
+  const keranjang = getKeranjang();
+  const item = keranjang[idx];
+  if (!item) return;
+  const baru = item.qty + delta;
+  if (baru < 1) { hapusItem(idx); return; }
+  if (baru > (item.stok || 99)) { showToast('⚠️ Stok tidak mencukupi'); return; }
+  keranjang[idx].qty = baru;
+  saveKeranjang(keranjang);
+  render();
+}
+
+function hapusItem(idx) {
+  const el = document.getElementById('item-' + idx);
+  if (el) {
+    el.classList.add('removing');
+    setTimeout(() => {
+      const keranjang = getKeranjang();
+      keranjang.splice(idx, 1);
+      saveKeranjang(keranjang);
+      render();
+      showToast('🗑 Item dihapus dari keranjang');
+    }, 280);
+  }
+}
+
+function checkout() {
+  const keranjang = getKeranjang();
+  if (keranjang.length === 0) return;
+
+  // Jika hanya 1 produk → langsung ke /beli/{id}
+  if (keranjang.length === 1) {
+    const item = keranjang[0];
+    window.location.href = `/beli/${item.id}?qty=${item.qty}`;
+    return;
+  }
+
+  // Jika lebih dari 1 → kirim ke /checkout dengan data JSON di sessionStorage
+  sessionStorage.setItem('checkout_items', JSON.stringify(keranjang));
+  window.location.href = '/checkout';
+}
+
+// Init
+render();
+
+// ============================================================
+// FUNGSI GLOBAL: tambahKeKeranjang(produk)
+// Dipanggil dari katalog.html / detail.html
+// produk = { id, nama, brand, tipe, harga, stok }
+// ============================================================
+window.tambahKeKeranjang = function(produk) {
+  const keranjang = getKeranjang();
+  const idx = keranjang.findIndex(x => x.id === produk.id);
+  if (idx >= 0) {
+    if (keranjang[idx].qty >= (produk.stok || 99)) {
+      showToast('⚠️ Stok tidak mencukupi'); return;
+    }
+    keranjang[idx].qty += 1;
+  } else {
+    keranjang.push({ ...produk, qty: 1 });
+  }
+  saveKeranjang(keranjang);
+  // Update ikon keranjang di navbar (jika ada)
+  const badge = document.getElementById('navCartBadge');
+  if (badge) badge.textContent = keranjang.reduce((s,x) => s+x.qty, 0);
+  showToast('🛒 Ditambahkan ke keranjang!');
+  render();
+};
+</script>
+</body>
+</html>

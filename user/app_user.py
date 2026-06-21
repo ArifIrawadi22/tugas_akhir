@@ -187,7 +187,130 @@ def beri_rating(kode):
         return redirect(f'/rating/{kode}?sukses=1')
     return render_template('rating.html', pesanan=pesanan,
                            sudah=sudah, sukses=request.args.get('sukses'))
+# ============================================================
+# Tambahkan route ini ke app_user.py
+# Letakkan setelah route /cek-pesanan yang sudah ada
+# ============================================================
 
+@app.route('/keranjang')
+def keranjang():
+    """Halaman keranjang belanja (data disimpan di localStorage browser)"""
+    return render_template('keranjang.html')
+
+
+# ============================================================
+# OPSIONAL — jika nanti mau checkout multi-produk dari keranjang
+# Data dikirim via POST (JSON) dari JavaScript
+# ============================================================
+
+from flask import session
+
+@app.route('/checkout-keranjang', methods=['POST'])
+def checkout_keranjang():
+    """
+    Terima data keranjang dari JS, buat satu Pesanan dengan banyak item.
+    Dipanggil dari keranjang.html ketika tombol 'Lanjut ke Pembayaran' diklik
+    dan keranjang berisi lebih dari 1 jenis produk.
+    """
+    from flask import request as req
+    data = req.get_json()
+    if not data:
+        return jsonify({'ok': False, 'pesan': 'Data kosong'}), 400
+
+    items      = data.get('items', [])
+    nama       = data.get('nama_pembeli', '').strip()
+    email      = data.get('email', '').strip()
+    no_hp      = data.get('no_hp', '').strip()
+    alamat     = data.get('alamat', '').strip()
+
+    if not items or not nama or not alamat:
+        return jsonify({'ok': False, 'pesan': 'Lengkapi data pembeli'}), 400
+
+    total = 0
+    kode  = f"PSN{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+    pesanan = Pesanan(
+        kode=kode,
+        nama_pembeli=nama,
+        email=email,
+        no_hp=no_hp,
+        alamat=alamat,
+        total_harga=0,
+        status='Menunggu',
+        tanggal=datetime.now().strftime('%d %b %Y %H:%M')
+    )
+    db.session.add(pesanan)
+    db.session.flush()
+
+    for item in items:
+        p = Produk.query.get(item['id'])
+        if not p:
+            continue
+        qty = int(item.get('qty', 1))
+        if qty > p.stok:
+            db.session.rollback()
+            return jsonify({'ok': False, 'pesan': f'Stok {p.nama} tidak mencukupi'}), 400
+        pi = PesananItem(pesanan_id=pesanan.id, produk_id=p.id,
+                         jumlah=qty, harga_saat=p.harga)
+        db.session.add(pi)
+        p.stok    -= qty
+        p.terjual += qty
+        total     += qty * p.harga
+
+    pesanan.total_harga = total
+    db.session.commit()
+    return jsonify({'ok': True, 'kode': kode, 'redirect': f'/berhasil/{kode}'})
+@app.route('/beli/<int:id>', methods=['GET','POST'])
+def beli(id):
+    p = Produk.query.get_or_404(id)
+
+    if request.method == 'POST':
+
+        # ==================================================
+        # MODE 1: SINGLE ITEM (default sekarang)
+        # ==================================================
+        qty = int(request.form.get('jumlah', 1))
+
+        if qty > p.stok:
+            return render_template('beli.html', produk=p, error='Stok tidak mencukupi!')
+
+        total = qty * p.harga
+
+        # ==================================================
+        # CREATE PESANAN
+        # ==================================================
+        kode = f"PSN{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        pesanan = Pesanan(
+            kode=kode,
+            nama_pembeli=request.form['nama_pembeli'],
+            email=request.form['email'],
+            no_hp=request.form['no_hp'],
+            alamat=request.form['alamat'],
+            total_harga=total,
+            status='Menunggu',
+            tanggal=datetime.now().strftime('%d %b %Y %H:%M')
+        )
+
+        db.session.add(pesanan)
+        db.session.flush()
+
+        # item tunggal
+        item = PesananItem(
+            pesanan_id=pesanan.id,
+            produk_id=p.id,
+            jumlah=qty,
+            harga_saat=p.harga
+        )
+        db.session.add(item)
+
+        p.stok -= qty
+        p.terjual += qty
+
+        db.session.commit()
+        return redirect(f'/berhasil/{pesanan.kode}')
+
+    return render_template('beli.html', produk=p, error='')
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

@@ -3,82 +3,468 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Beli Produk – Toko Kosmetik</title>
+  <title>Beli {{ produk.nama[:40] }} – Toko Kosmetik</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background: #fdf4ff; font-family: 'Segoe UI', sans-serif; }
-    .navbar-brand { font-weight: 700; color: #a855f7 !important; }
-    .box { background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 16px rgba(0,0,0,.07); }
-    .produk-mini { background: #fdf4ff; border-radius: 12px; padding: 1rem; border: 1px solid #e9d5ff; }
-    .harga-total { font-size: 1.5rem; font-weight: 700; color: #7c3aed; }
-    .btn-pesan { background: linear-gradient(135deg,#e879a0,#a855f7); color: #fff; border: none; border-radius: 10px; padding: .65rem 1.5rem; font-size: 1rem; }
-    .btn-pesan:hover { opacity:.9; color:#fff; }
-    label { font-size: .88rem; font-weight: 600; color: #374151; }
+    body { background: #fdf4ff; font-family: 'Segoe UI', sans-serif; padding-top: 70px; }
+
+    /* Navbar */
+    .glass-navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.4);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    }
+    .navbar-brand { font-weight: 800; color: #7c3aed !important; }
+
+    /* Layout */
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .page-title { font-size: 1.5rem; font-weight: 800; color: #3b0764; margin-bottom: 1.5rem; }
+
+    /* Card produk mini */
+    .produk-card {
+      background: #fff; border-radius: 16px;
+      border: 1.5px solid #e9d5ff; padding: 1.1rem 1.25rem;
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .produk-ikon {
+      font-size: 2.4rem; background: #fdf4ff; border-radius: 12px;
+      width: 60px; height: 60px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .produk-nama { font-weight: 700; color: #1f2937; font-size: .95rem; line-height: 1.3; }
+    .produk-meta { font-size: .78rem; color: #9ca3af; margin-top: 2px; }
+    .produk-harga { font-size: 1.05rem; font-weight: 800; color: #7c3aed; margin-top: 4px; }
+    .bpom-pill {
+      display: inline-block; font-size: .68rem; background: #f0fdf4;
+      color: #166534; border-radius: 6px; padding: 2px 8px; font-weight: 600;
+    }
+    .stok-pill {
+      display: inline-block; font-size: .68rem; background: #fef9c3;
+      color: #854d0e; border-radius: 6px; padding: 2px 8px; font-weight: 600;
+    }
+
+    /* Box form */
+    .form-box {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(168,85,247,.08);
+      padding: 1.5rem; margin-bottom: 1.2rem;
+    }
+    .box-title {
+      font-size: .95rem; font-weight: 800; color: #3b0764;
+      margin-bottom: 1.2rem; display: flex; align-items: center; gap: .5rem;
+    }
+    label { font-size: .85rem; font-weight: 600; color: #374151; }
+    .form-control:focus, .form-select:focus {
+      border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,.12);
+    }
+
+    /* Qty stepper */
+    .qty-wrapper { display: flex; align-items: center; gap: 0; }
+    .qty-stepper {
+      display: flex; align-items: center;
+      border: 1.5px solid #e9d5ff; border-radius: 10px; overflow: hidden;
+    }
+    .qty-btn {
+      background: #fdf4ff; border: none; width: 40px; height: 40px;
+      font-size: 1.1rem; font-weight: 700; color: #7c3aed; cursor: pointer;
+      transition: background .15s;
+    }
+    .qty-btn:hover { background: #ede9fe; }
+    .qty-input {
+      width: 52px; text-align: center; font-size: 1rem; font-weight: 800;
+      color: #3b0764; border: none; border-left: 1.5px solid #e9d5ff;
+      border-right: 1.5px solid #e9d5ff; height: 40px; outline: none;
+      -moz-appearance: textfield;
+    }
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .stok-info { font-size: .78rem; color: #9ca3af; margin-left: .75rem; }
+    .stok-warning { color: #ef4444; font-weight: 600; }
+
+    /* Keranjang badge */
+    .from-cart-badge {
+      background: #ede9fe; color: #7c3aed; border-radius: 8px;
+      font-size: .75rem; font-weight: 600; padding: .25rem .7rem;
+      display: inline-flex; align-items: center; gap: .3rem;
+    }
+
+    /* Ringkasan total */
+    .summary-box {
+      background: linear-gradient(135deg,#fdf4ff,#ede9fe);
+      border: 1.5px solid #e9d5ff; border-radius: 14px;
+      padding: 1.2rem; margin-top: 1rem;
+    }
+    .summary-row { display: flex; justify-content: space-between; font-size: .88rem; color: #4b5563; margin-bottom: .5rem; }
+    .summary-row.total { font-weight: 800; font-size: 1.1rem; color: #3b0764; border-top: 1.5px solid #e9d5ff; padding-top: .75rem; margin-top: .25rem; }
+    .summary-row .val { color: #7c3aed; font-weight: 700; }
+    .summary-row.total .val { font-size: 1.25rem; }
+
+    /* Tombol */
+    .btn-pesan {
+      background: linear-gradient(135deg,#e879a0,#a855f7);
+      color: #fff; border: none; border-radius: 12px;
+      padding: .8rem 1.5rem; font-size: 1rem; font-weight: 700;
+      transition: opacity .2s; width: 100%;
+    }
+    .btn-pesan:hover { opacity: .88; color: #fff; }
+    .btn-pesan:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* Error */
+    .alert-error {
+      background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+      border-radius: 10px; padding: .75rem 1rem; font-size: .88rem;
+      margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem;
+    }
+
+    /* Step indicator */
+    .steps { display: flex; align-items: center; gap: 0; margin-bottom: 2rem; }
+    .step {
+      display: flex; align-items: center; gap: .4rem;
+      font-size: .78rem; font-weight: 700; color: #d1d5db;
+    }
+    .step.active { color: #7c3aed; }
+    .step.done { color: #10b981; }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%; border: 2px solid currentColor;
+      display: flex; align-items: center; justify-content: center; font-size: .7rem;
+      flex-shrink: 0;
+    }
+    .step-line { flex: 1; height: 2px; background: #e9d5ff; margin: 0 .4rem; }
+
+    /* Tooltip stok habis */
+    .stok-habis-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4);
+      z-index: 9999; align-items: center; justify-content: center;
+    }
+    .stok-habis-overlay.show { display: flex; }
   </style>
 </head>
 <body>
-<nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
-  <a class="navbar-brand" href="/katalog">💄 Toko Kosmetik</a>
-  <a href="/produk/{{ produk.id }}" class="btn btn-sm btn-outline-secondary">← Kembali</a>
-</nav>
-<div class="container py-4" style="max-width:700px">
-  <h4 class="fw-bold mb-4">🛒 Form Pemesanan</h4>
-  <div class="produk-mini d-flex gap-3 align-items-center mb-4">
-    <div style="font-size:2.5rem">{% if produk.tipe=='serum' %}🧪{% elif produk.tipe=='toner' %}💧{% else %}🫧{% endif %}</div>
-    <div class="flex-grow-1">
-      <div class="fw-semibold">{{ produk.nama[:60] }}</div>
-      <div class="text-muted small">{{ produk.brand }} • {{ produk.ukuran }}</div>
-      <div class="fw-bold mt-1" style="color:#7c3aed">Rp {{ "{:,.0f}".format(produk.harga) }} / unit</div>
+
+<!-- Navbar -->
+<nav class="navbar glass-navbar px-4 py-2">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="/katalog">
+      <img src="/static/img/download.png" width="32" height="32" alt=""
+           onerror="this.style.display='none'">
+      𝓉ℴ𝓀ℴ 𝓀ℴ𝓈𝓂ℯ𝓉𝒾𝓀
+    </a>
+    <div class="d-flex gap-2">
+      <a href="/keranjang" class="btn btn-sm"
+         style="background:#ede9fe;color:#7c3aed;border-radius:20px;font-weight:600">
+        🛒 Keranjang
+      </a>
+      <a href="/produk/{{ produk.id }}" class="btn btn-sm btn-outline-secondary"
+         style="border-radius:20px">← Kembali</a>
     </div>
-    <div class="text-muted small">Stok: {{ produk.stok }}</div>
   </div>
-  <form method="POST">
-    <div class="box">
-      <h6 class="fw-bold mb-3">📦 Data Pemesan</h6>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- Step indicator -->
+  <div class="steps">
+    <div class="step done"><div class="step-num">✓</div> Pilih Produk</div>
+    <div class="step-line"></div>
+    <div class="step active"><div class="step-num">2</div> Isi Data</div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num">3</div> Konfirmasi</div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num">4</div> Selesai</div>
+  </div>
+
+  <div class="page-title">📋 Form Pemesanan</div>
+
+  <!-- Error (jika ada) -->
+  {% if error %}
+  <div class="alert-error">⚠️ {{ error }}</div>
+  {% endif %}
+
+  <!-- Produk mini -->
+  <div class="produk-card">
+    <div class="produk-ikon">
+      {% if produk.tipe=='serum' %}🧪
+      {% elif produk.tipe=='toner' %}💧
+      {% else %}🫧{% endif %}
+    </div>
+    <div class="flex-grow-1">
+      <div class="produk-nama">{{ produk.nama }}</div>
+      <div class="produk-meta">{{ produk.brand }} • {{ produk.ukuran or '-' }}</div>
+      <div class="produk-harga">Rp {{ "{:,.0f}".format(produk.harga) }} <span style="font-size:.75rem;color:#9ca3af;font-weight:400">/ unit</span></div>
+      <div class="mt-1 d-flex gap-2 flex-wrap">
+        <span class="bpom-pill">✅ BPOM: {{ produk.bpom_id }}</span>
+        <span class="stok-pill">📦 Stok: {{ produk.stok }} unit</span>
+        {% if produk.rating %}
+        <span class="bpom-pill" style="background:#fdf4ff;color:#7c3aed">⭐ {{ produk.rating }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <form method="POST" id="formPesan" onsubmit="return validasiForm()">
+
+    <!-- ===== BOX 1: Jumlah ===== -->
+    <div class="form-box">
+      <div class="box-title">
+        🛒 Jumlah Pembelian
+        <span class="from-cart-badge" id="cartBadge" style="display:none">
+          📦 Dari keranjang
+        </span>
+      </div>
+      <div class="qty-wrapper">
+        <div class="qty-stepper">
+          <button type="button" class="qty-btn" onclick="ubahQty(-1)">−</button>
+          <input type="number" name="jumlah" id="qty"
+                 class="qty-input" value="1" min="1" max="{{ produk.stok }}"
+                 oninput="hitungTotal()" required>
+          <button type="button" class="qty-btn" onclick="ubahQty(+1)">+</button>
+        </div>
+        <span class="stok-info" id="stokInfo">Maks. {{ produk.stok }} unit</span>
+      </div>
+    </div>
+
+    <!-- ===== BOX 2: Data pemesan ===== -->
+    <div class="form-box">
+      <div class="box-title">👤 Data Pemesan</div>
       <div class="row g-3">
         <div class="col-md-6">
           <label>Nama Lengkap *</label>
-          <input name="nama_pembeli" class="form-control mt-1" required placeholder="Nama kamu">
+          <input name="nama_pembeli" id="namaPembeli" class="form-control mt-1"
+                 required placeholder="Nama lengkap kamu" autocomplete="name">
         </div>
         <div class="col-md-6">
           <label>No. HP / WhatsApp *</label>
-          <input name="no_hp" class="form-control mt-1" required placeholder="08xx-xxxx-xxxx">
+          <input name="no_hp" id="noHp" class="form-control mt-1"
+                 required placeholder="08xx-xxxx-xxxx" autocomplete="tel"
+                 pattern="[0-9+\-\s]{8,15}" title="Nomor HP yang valid">
         </div>
         <div class="col-md-6">
           <label>Email *</label>
-          <input name="email" type="email" class="form-control mt-1" required placeholder="email@contoh.com">
+          <input name="email" id="email" type="email" class="form-control mt-1"
+                 required placeholder="email@contoh.com" autocomplete="email">
         </div>
         <div class="col-md-6">
-          <label>Jumlah Beli *</label>
-          <input name="jumlah" type="number" class="form-control mt-1" min="1" max="{{ produk.stok }}" value="1" required id="qty" onchange="hitungTotal()">
+          <label>Metode Pembayaran *</label>
+          <select name="metode_bayar" class="form-select mt-1" required>
+            <option value="" disabled selected>Pilih metode...</option>
+            <option value="Transfer BCA">🏦 Transfer BCA</option>
+            <option value="Transfer BRI">🏦 Transfer BRI</option>
+            <option value="Transfer Mandiri">🏦 Transfer Mandiri</option>
+            <option value="QRIS">📱 QRIS</option>
+            <option value="COD">🚚 Bayar di Tempat (COD)</option>
+          </select>
         </div>
         <div class="col-12">
           <label>Alamat Pengiriman *</label>
-          <textarea name="alamat" class="form-control mt-1" rows="3" required placeholder="Jl. Contoh No.1, Kota, Provinsi, Kode Pos"></textarea>
+          <textarea name="alamat" id="alamat" class="form-control mt-1"
+                    rows="3" required
+                    placeholder="Jl. Contoh No.1, Kelurahan, Kecamatan, Kota, Provinsi, Kode Pos"
+                    autocomplete="street-address"></textarea>
+        </div>
+        <div class="col-md-6">
+          <label>Catatan untuk Penjual</label>
+          <input name="catatan" class="form-control mt-1"
+                 placeholder="Opsional: warna, ukuran, permintaan khusus">
+        </div>
+        <div class="col-md-6">
+          <label>Kupon / Kode Promo</label>
+          <div class="input-group mt-1">
+            <input id="inputKupon" class="form-control" placeholder="Masukkan kode promo">
+            <button type="button" class="btn btn-outline-secondary" onclick="pakaiKupon()">Pakai</button>
+          </div>
+          <div id="kuponInfo" class="text-success small mt-1" style="display:none"></div>
         </div>
       </div>
-      <div class="mt-4 p-3 text-center" style="background:#fdf4ff;border-radius:10px;border:1px solid #e9d5ff">
-        <div class="text-muted small">Total Pembayaran</div>
-        <div class="harga-total" id="totalHarga">Rp {{ "{:,.0f}".format(produk.harga) }}</div>
-        <div class="text-muted small" id="infoQty">1 unit × Rp {{ "{:,.0f}".format(produk.harga) }}</div>
+    </div>
+
+    <!-- ===== BOX 3: Ringkasan & total ===== -->
+    <div class="form-box">
+      <div class="box-title">💳 Ringkasan Pembayaran</div>
+      <div class="summary-box">
+        <div class="summary-row">
+          <span>Harga satuan</span>
+          <span class="val">Rp {{ "{:,.0f}".format(produk.harga) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Jumlah</span>
+          <span class="val" id="sumQty">1 unit</span>
+        </div>
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span class="val" id="sumSubtotal">Rp {{ "{:,.0f}".format(produk.harga) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Ongkos kirim</span>
+          <span class="val" id="sumOngkir">Rp 15.000</span>
+        </div>
+        <div class="summary-row" id="rowDiskon" style="display:none">
+          <span>Diskon promo</span>
+          <span class="val" id="sumDiskon" style="color:#10b981">- Rp 0</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total Bayar</span>
+          <span class="val" id="sumTotal">Rp {{ "{:,.0f}".format(produk.harga + 15000) }}</span>
+        </div>
       </div>
-      <div class="mt-3 p-2 small text-muted" style="background:#f9fafb;border-radius:8px">
-        ✅ BPOM: <strong>{{ produk.bpom_id }}</strong> — produk telah terdaftar dan aman
+
+      <!-- Konfirmasi & submit -->
+      <div class="mt-3 p-3 small" style="background:#f0fdf4;border-radius:10px;color:#166534">
+        ✅ Pesanan akan diproses setelah pembayaran dikonfirmasi oleh penjual.
+        Kamu bisa cek status di <strong>Cek Pesanan</strong>.
       </div>
-      <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-pesan flex-grow-1">✅ Konfirmasi Pesanan</button>
-        <a href="/produk/{{ produk.id }}" class="btn btn-outline-secondary">Batal</a>
+
+      <div class="mt-4 d-flex gap-2 flex-column flex-sm-row">
+        <button type="submit" class="btn-pesan" id="btnSubmit">
+          ✅ Konfirmasi Pesanan
+        </button>
+        <a href="/keranjang" class="btn btn-outline-secondary flex-shrink-0"
+           style="border-radius:12px;padding:.8rem 1.2rem;font-weight:600">
+          ← Keranjang
+        </a>
       </div>
     </div>
+
   </form>
 </div>
+
 <script>
-const harga = {{ produk.harga }};
-function hitungTotal() {
-  const qty = parseInt(document.getElementById('qty').value) || 1;
-  document.getElementById('totalHarga').textContent = 'Rp ' + (qty*harga).toLocaleString('id-ID');
-  document.getElementById('infoQty').textContent = qty + ' unit × Rp ' + harga.toLocaleString('id-ID');
+// ============================================================
+//  Konstanta produk (dari Flask)
+// ============================================================
+const HARGA  = {{ produk.harga }};
+const STOK   = {{ produk.stok }};
+const PRODUK_ID = {{ produk.id }};
+const ONGKIR_FREE_THRESHOLD = 200000;
+const ONGKIR_FEE = 15000;
+
+let diskon = 0; // nominal diskon dari kupon
+
+// ============================================================
+//  1. AUTO-ISI qty DARI KERANJANG localStorage
+// ============================================================
+(function autoIsiDariKeranjang() {
+  try {
+    const keranjang = JSON.parse(localStorage.getItem('keranjang') || '[]');
+    const item = keranjang.find(x => x.id === PRODUK_ID);
+    if (item && item.qty > 0) {
+      const qty = Math.min(item.qty, STOK);
+      document.getElementById('qty').value = qty;
+      document.getElementById('cartBadge').style.display = 'inline-flex';
+      hitungTotal();
+    }
+  } catch(e) {}
+
+  // Cek juga param ?qty= dari URL (jika redirect dari keranjang)
+  const params = new URLSearchParams(window.location.search);
+  const qtyParam = parseInt(params.get('qty'));
+  if (qtyParam && qtyParam > 0) {
+    document.getElementById('qty').value = Math.min(qtyParam, STOK);
+    document.getElementById('cartBadge').style.display = 'inline-flex';
+    hitungTotal();
+  }
+})();
+
+// ============================================================
+//  2. STEPPER qty
+// ============================================================
+function ubahQty(delta) {
+  const el  = document.getElementById('qty');
+  const val = parseInt(el.value) || 1;
+  const baru = Math.max(1, Math.min(STOK, val + delta));
+  el.value = baru;
+  hitungTotal();
 }
+
+// ============================================================
+//  3. HITUNG TOTAL (realtime)
+// ============================================================
+function hitungTotal() {
+  const qty      = Math.max(1, Math.min(STOK, parseInt(document.getElementById('qty').value) || 1));
+  const subtotal = qty * HARGA;
+  const ongkir   = subtotal >= ONGKIR_FREE_THRESHOLD ? 0 : ONGKIR_FEE;
+  const total    = subtotal + ongkir - diskon;
+
+  document.getElementById('sumQty').textContent      = qty + ' unit';
+  document.getElementById('sumSubtotal').textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
+  document.getElementById('sumOngkir').textContent   =
+    ongkir === 0 ? '🎉 Gratis' : 'Rp ' + ongkir.toLocaleString('id-ID');
+  document.getElementById('sumTotal').textContent    = 'Rp ' + Math.max(0, total).toLocaleString('id-ID');
+
+  // Stok warning
+  const info = document.getElementById('stokInfo');
+  if (qty >= STOK) {
+    info.innerHTML = `<span class="stok-warning">⚠️ Maksimum stok (${STOK} unit)</span>`;
+  } else {
+    info.textContent = `Maks. ${STOK} unit`;
+  }
+}
+
+// ============================================================
+//  4. KUPON PROMO (contoh statis, bisa dihubungkan ke backend)
+// ============================================================
+const KUPON_VALID = {
+  'CANTIK10': 10000,
+  'HEMAT20K': 20000,
+  'NEWUSER' : 15000,
+};
+
+function pakaiKupon() {
+  const kode    = document.getElementById('inputKupon').value.trim().toUpperCase();
+  const infoEl  = document.getElementById('kuponInfo');
+  const rowEl   = document.getElementById('rowDiskon');
+  const diskonEl = document.getElementById('sumDiskon');
+
+  if (!kode) { infoEl.style.display='none'; return; }
+
+  if (KUPON_VALID[kode]) {
+    diskon = KUPON_VALID[kode];
+    infoEl.style.display = 'block';
+    infoEl.textContent   = `✅ Kupon "${kode}" berhasil! Hemat Rp ${diskon.toLocaleString('id-ID')}`;
+    rowEl.style.display  = 'flex';
+    diskonEl.textContent = `- Rp ${diskon.toLocaleString('id-ID')}`;
+    hitungTotal();
+  } else {
+    diskon = 0;
+    infoEl.style.display = 'block';
+    infoEl.className     = 'text-danger small mt-1';
+    infoEl.textContent   = '❌ Kode promo tidak valid atau sudah kadaluarsa.';
+    rowEl.style.display  = 'none';
+    hitungTotal();
+  }
+}
+
+// ============================================================
+//  5. VALIDASI FORM sebelum submit
+// ============================================================
+function validasiForm() {
+  const qty = parseInt(document.getElementById('qty').value) || 0;
+  if (qty < 1 || qty > STOK) {
+    alert(`⚠️ Jumlah harus antara 1 dan ${STOK}`);
+    return false;
+  }
+  // Nonaktifkan tombol supaya tidak double submit
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = '⏳ Memproses...';
+  return true;
+}
+
+// ============================================================
+//  6. HAPUS dari keranjang setelah berhasil order
+//     (dipanggil dari halaman /berhasil via query param)
+// ============================================================
+window.addEventListener('load', () => {
+  // Jika ada ?hapus_keranjang=1 di URL, hapus item dari localStorage
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('hapus_keranjang') === '1') {
+    try {
+      let k = JSON.parse(localStorage.getItem('keranjang') || '[]');
+      k = k.filter(x => x.id !== PRODUK_ID);
+      localStorage.setItem('keranjang', JSON.stringify(k));
+    } catch(e) {}
+  }
+});
 </script>
 </body>
 </html>

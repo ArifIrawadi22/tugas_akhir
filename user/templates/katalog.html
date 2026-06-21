@@ -7,7 +7,6 @@
   <meta name="description" content="Temukan produk kosmetik dan skincare terbaik. Serum, toner, facial wash dari brand ternama dengan harga terjangkau.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- SEMANTIC WEB: Schema.org untuk Google & mesin pencari -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -24,23 +23,18 @@
   </script>
 
   <style>
-.hero {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
-  min-height: 70vh; /* 🔥 ini yang bikin besar */
-  display: flex;
-  align-items: center;
-
-  padding: 4rem 0;
-  text-align: center;
-  position: relative;
-  transition: background-image 1s ease-in-out;
-}
-
-
-    /* ===== Trust badges di hero ===== */
+    .hero {
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      padding: 4rem 0;
+      text-align: center;
+      position: relative;
+      transition: background-image 1s ease-in-out;
+    }
     .trust-row { margin-top: 1rem; }
     .trust-pill {
       display: inline-flex; align-items: center; gap: .35rem;
@@ -48,21 +42,11 @@
       color: #fff; font-size: .8rem; font-weight: 600;
       border-radius: 30px; padding: .4rem 1rem; margin: 0 .3rem .5rem 0;
     }
-
-    /* ===== Gambar pada banner hero ===== */
     .hero-image-frame {
       border-radius: 18px; overflow: hidden; box-shadow: 0 16px 36px -16px rgba(59,7,100,.4);
       max-width: 380px; margin: 0 auto; aspect-ratio: 4/3; background: rgba(255,255,255,.18);
     }
     .hero-image { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .hero-image-fallback {
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg,#fbcfe8,#e9d5ff);
-      color: #7c3aed; font-size: 2.5rem;
-    }
-    .hero-image-fallback::after { content: "💄✨"; }
-
-    /* ===== Banner promo bestseller ===== */
     .promo-banner {
       background: linear-gradient(120deg,#3b0764,#7c3aed);
       padding: 1.6rem 0 1.8rem;
@@ -86,7 +70,11 @@
     .promo-card .harga-mini { color: #7c3aed; font-weight: 800; font-size: .88rem; }
     .promo-card .terjual-mini { font-size: .68rem; color: #9ca3af; }
 
-    .card-produk { border: none; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.07); transition: .2s; background: #fff; height: 100%; }
+    .card-produk {
+      border: none; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      transition: .2s; background: #fff; height: 100%;
+    }
     .card-produk:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(168,85,247,.15); }
     .badge-tipe { font-size: .7rem; padding: .25rem .6rem; border-radius: 20px; }
     .badge-serum { background: #ede9fe; color: #7c3aed; }
@@ -94,142 +82,135 @@
     .badge-facial { background: #e0f2fe; color: #0369a1; }
     .harga { font-size: 1.1rem; font-weight: 700; color: #7c3aed; }
     .terjual { font-size: .75rem; color: #9ca3af; }
-    .btn-beli { background: linear-gradient(135deg,#e879a0,#a855f7); color: #fff; border: none; border-radius: 8px; font-size: .85rem; }
+
+    /* Tombol beli & keranjang */
+    .btn-beli {
+      background: linear-gradient(135deg,#e879a0,#a855f7);
+      color: #fff; border: none; border-radius: 8px; font-size: .85rem;
+    }
     .btn-beli:hover { opacity: .9; color: #fff; }
-    .filter-bar { background: #fff; border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .btn-keranjang {
+      background: #ede9fe; color: #7c3aed;
+      border: none; border-radius: 8px; font-size: .85rem;
+      font-weight: 600; transition: background .15s;
+    }
+    .btn-keranjang:hover { background: #ddd6fe; color: #6d28d9; }
+    .btn-keranjang.ditambah {
+      background: #f0fdf4; color: #166534;
+      animation: popIn .25s ease;
+    }
+    @keyframes popIn {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    .filter-bar {
+      background: #fff; border-radius: 14px; padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
     .bpom-badge { font-size: .65rem; background: #f0fdf4; color: #166534; border-radius: 4px; padding: 2px 6px; }
-    .stok-habis { opacity: .5; pointer-events: none; }
-    .admin-link { font-size: .8rem; color: #9ca3af; }
 
+    /* Navbar */
     .glass-navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(255,255,255,0.2); backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .glass-navbar .navbar-brand { color: #7c3aed !important; font-weight: 700; }
+    body { padding-top: 70px; }
 
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+    /* Toast notif */
+    #toastKatalog {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #3b0764; color: #fff; border-radius: 10px;
+      padding: .7rem 1.2rem; font-size: .85rem; font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 9999;
+      transform: translateY(80px); opacity: 0;
+      transition: transform .3s, opacity .3s; pointer-events: none;
+    }
+    #toastKatalog.show { transform: translateY(0); opacity: 1; }
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-}
-
-/* brand warna ungu biar cocok tema kosmetik */
-.glass-navbar .navbar-brand {
-  color: #7c3aed !important;
-  font-weight: 700;
-}
-
-/* tombol lebih soft */
-.glass-navbar .btn-light {
-  background: rgba(255,255,255,0.8);
-  border: none;
-}
-
-.glass-navbar .btn-light:hover {
-  background: white;
-}
-
-/* biar tidak ketutup navbar */
-body {
-  padding-top: 70px;
-}
+    /* Badge keranjang di navbar */
+    #navCartBadge {
+      position: absolute; top: -6px; right: -6px;
+      background: #e879a0; color: #fff; font-size: .62rem;
+      border-radius: 50%; width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; line-height: 1;
+    }
   </style>
 </head>
+
 <script>
 const banners = [
-  "/static/img/instagram.png",
-  "/static/img/banner2.png",
-  "/static/img/banner-hero.png"
+  "/static/img/banner-hero.png",
+  "/static/img/instagram.jpeg",
+  "/static/img/banner45.jpg"
 ];
-
 let i = 0;
-
 function changeBanner() {
-  document.querySelector(".hero").style.backgroundImage =
-    `url('${banners[i]}')`;
+  document.querySelector(".hero").style.backgroundImage = `url('${banners[i]}')`;
   i = (i + 1) % banners.length;
 }
-
-window.addEventListener("load", () => {
-  changeBanner();
-  setInterval(changeBanner, 3000);
-});
+window.addEventListener("load", () => { changeBanner(); setInterval(changeBanner, 3000); });
 </script>
+
 <body>
 
 {% set total_terjual = produk|sum(attribute='terjual') %}
-{% set total_brand = produk|map(attribute='brand')|unique|list|length %}
-{% set avg_rating = (produk|sum(attribute='rating') / produk|length) if produk|length > 0 else 0 %}
-{% set bestseller = produk|sort(attribute='terjual', reverse=true) %}
+{% set total_brand   = produk|map(attribute='brand')|unique|list|length %}
+{% set avg_rating    = (produk|sum(attribute='rating') / produk|length) if produk|length > 0 else 0 %}
+{% set bestseller    = produk|sort(attribute='terjual', reverse=true) %}
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg glass-navbar px-4 py-2">
   <div class="container-fluid">
-
-    <!-- Brand -->
-    <a class="navbar-brand fw-bold" href="/">
-      💄 Toko Kosmetik
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+      <img src="/static/img/download.png" alt="Logo" width="35" height="35">
+      𝓉ℴ𝓀ℴ 𝓀ℴ𝓈𝓂ℯ𝓉𝒾𝓀
     </a>
 
-    <!-- toggle mobile -->
     <button class="navbar-toggler" type="button"
             data-bs-toggle="collapse" data-bs-target="#navMenu">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <!-- menu -->
     <div class="collapse navbar-collapse" id="navMenu">
-
-      <!-- SEARCH FORM -->
+      <!-- Search -->
       <form class="d-flex mx-auto my-2 my-lg-0" method="GET" action="/katalog">
-        
-        <input
-          name="cari"
-          value="{{ cari }}"
-          class="form-control me-2"
-          style="border-radius:30px; min-width:250px;"
-          placeholder="🔍 Cari produk atau brand..."
-        >
-
-        <input type="hidden" name="tipe" value="{{ tipe }}">
-        <input type="hidden" name="sort" value="{{ sort }}">
-
-        <button class="btn btn-light fw-semibold px-4" style="border-radius:30px">
-          Cari
-        </button>
+        <input name="cari" value="{{ cari }}" class="form-control me-2"
+               style="border-radius:30px;min-width:250px"
+               placeholder="Cari produk atau brand...">
+        <input type="hidden" name="tipe"  value="{{ tipe }}">
+        <input type="hidden" name="sort"  value="{{ sort }}">
+        <button class="btn btn-light fw-semibold px-4" style="border-radius:30px">Cari</button>
       </form>
 
-      <!-- RIGHT MENU -->
+      <!-- Right menu -->
       <div class="ms-lg-auto d-flex gap-2 align-items-center mt-2 mt-lg-0">
-
-        <a href="/cek-pesanan" class="btn btn-sm btn-outline-light">
+        <a href="/cek-pesanan" class="btn btn-sm btn-outline-secondary" style="border-radius:20px">
           🔍 Cek Pesanan
         </a>
 
-        <a href="/" class="btn btn-sm btn-light">
-          Admin Login
+        <!-- ✅ TOMBOL KERANJANG DI NAVBAR -->
+        <a href="/keranjang" class="btn btn-sm position-relative"
+           style="background:linear-gradient(135deg,#e879a0,#a855f7);
+                  color:#fff;border-radius:20px;font-weight:600;padding:.4rem 1rem">
+          🛒 Keranjang
+          <span id="navCartBadge" style="display:none">0</span>
         </a>
-
       </div>
-
     </div>
   </div>
 </nav>
 
-<!-- Hero / Banner utama -->
-<div class="hero">
-  <div class="container">
-    <div class="row align-items-center">
-      <div class="col-lg-7 text-lg-start">
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Hero -->
+<div class="hero"></div>
 
-<!-- Banner promo: produk terlaris -->
+<!-- Banner terlaris -->
 {% if bestseller %}
 <div class="promo-banner">
   <div class="container">
@@ -260,7 +241,8 @@ window.addEventListener("load", () => {
   <div class="filter-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
     <div class="d-flex gap-2 flex-wrap">
       <span class="text-muted small">Filter:</span>
-      <a href="/katalog?sort={{ sort }}" class="btn btn-sm {% if not tipe %}btn-purple text-white{% else %}btn-outline-secondary{% endif %}"
+      <a href="/katalog?sort={{ sort }}"
+         class="btn btn-sm {% if not tipe %}btn-purple text-white{% else %}btn-outline-secondary{% endif %}"
          style="border-radius:20px;{% if not tipe %}background:#a855f7;border-color:#a855f7{% endif %}">Semua</a>
       {% for t in tipe_list %}
       <a href="/katalog?tipe={{ t|urlencode }}&sort={{ sort|urlencode }}{% if cari %}&cari={{ cari|urlencode }}{% endif %}"
@@ -272,7 +254,8 @@ window.addEventListener("load", () => {
     </div>
     <div class="d-flex gap-2 align-items-center">
       <span class="text-muted small">Urutkan:</span>
-      <select class="form-select form-select-sm" style="width:140px" onchange="window.location='/katalog?tipe='+encodeURIComponent('{{ tipe }}')+'&cari='+encodeURIComponent('{{ cari }}')+'&sort='+this.value">
+      <select class="form-select form-select-sm" style="width:140px"
+              onchange="window.location='/katalog?tipe='+encodeURIComponent('{{ tipe }}')+'&cari='+encodeURIComponent('{{ cari }}')+'&sort='+this.value">
         <option value="terlaris" {% if sort=='terlaris' %}selected{% endif %}>Terlaris</option>
         <option value="rating"   {% if sort=='rating'   %}selected{% endif %}>Rating ⭐</option>
         <option value="termurah" {% if sort=='termurah' %}selected{% endif %}>Termurah</option>
@@ -284,19 +267,20 @@ window.addEventListener("load", () => {
   <!-- Grid Produk -->
   <div class="row g-3">
     {% for p in produk %}
-    <!-- SEMANTIC WEB: setiap produk punya itemscope Product -->
     <div class="col-6 col-md-4 col-lg-3" itemscope itemtype="https://schema.org/Product">
       <div class="card-produk p-3 d-flex flex-column">
-        <!-- Ikon produk berdasarkan tipe -->
-        <div class="text-center mb-2" style="font-size:2.5rem;background:#fdf4ff;border-radius:10px;padding:.5rem">
-          {% if p.tipe == 'serum' %}🧪{% elif p.tipe == 'toner' %}💧{% else %}🫧{% endif %}
+
+        <div class="text-center mb-2"
+             style="font-size:2.5rem;background:#fdf4ff;border-radius:10px;padding:.5rem">
+          {% if p.tipe == 'serum' %}🧪
+          {% elif p.tipe == 'toner' %}💧
+          {% else %}🫧{% endif %}
         </div>
 
         <div class="mb-1">
           <span class="badge badge-{{ p.tipe.replace(' ','') }} badge-tipe">{{ p.tipe }}</span>
         </div>
 
-        <!-- itemprop = semantic web -->
         <div class="fw-semibold small mb-1" itemprop="name" style="line-height:1.3">
           {{ p.nama[:55] }}{% if p.nama|length > 55 %}…{% endif %}
         </div>
@@ -305,7 +289,7 @@ window.addEventListener("load", () => {
         </div>
 
         <div class="mb-1">
-          <span class="bpom-badge" title="Nomor BPOM (Semantic Identifier)">✅ BPOM: {{ p.bpom_id[:14] }}</span>
+          <span class="bpom-badge">✅ BPOM: {{ p.bpom_id[:14] }}</span>
         </div>
 
         <div class="mt-auto pt-2">
@@ -319,7 +303,25 @@ window.addEventListener("load", () => {
             </span></span>
           </div>
           <div class="terjual mb-2">{{ p.terjual }} terjual • Stok: {{ p.stok }}</div>
-          <a href="/produk/{{ p.id }}" class="btn btn-beli w-100 btn-sm py-1 mb-1">Lihat Detail →</a>
+
+          <!-- ✅ TOMBOL TAMBAH KE KERANJANG -->
+          <button
+            id="btn-cart-{{ p.id }}"
+            onclick='tambahKeKeranjang({
+              id:     {{ p.id }},
+              nama:   {{ p.nama | tojson }},
+              brand:  {{ p.brand | tojson }},
+              tipe:   {{ p.tipe | tojson }},
+              harga:  {{ p.harga }},
+              stok:   {{ p.stok }}
+            }, this)'
+            class="btn btn-keranjang w-100 btn-sm py-1 mb-1">
+            🛒 + Keranjang
+          </button>
+
+          <a href="/produk/{{ p.id }}" class="btn btn-beli w-100 btn-sm py-1">
+            Lihat Detail →
+          </a>
         </div>
       </div>
     </div>
@@ -334,16 +336,92 @@ window.addEventListener("load", () => {
   </div>
   {% endif %}
 
-  <!-- Info Semantic Web -->
   <div class="mt-5 p-3 text-center" style="background:#ede9fe;border-radius:12px">
     <small class="text-muted">
       🌐 Data produk ini tersedia secara semantik di
       <a href="/api/produk" target="_blank" style="color:#7c3aed">API JSON-LD</a>
-      — dapat dibaca oleh Google, mesin pencari, dan aplikasi lain (Semantic Web)
     </small>
   </div>
 </div>
 
+<!-- Toast notifikasi -->
+<div id="toastKatalog"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ============================================================
+//  KERANJANG — localStorage helper
+// ============================================================
+function getKeranjang() {
+  try { return JSON.parse(localStorage.getItem('keranjang') || '[]'); }
+  catch { return []; }
+}
+function saveKeranjang(data) {
+  localStorage.setItem('keranjang', JSON.stringify(data));
+}
+
+function updateNavBadge() {
+  const total = getKeranjang().reduce((s, x) => s + x.qty, 0);
+  const badge = document.getElementById('navCartBadge');
+  if (!badge) return;
+  if (total > 0) { badge.textContent = total; badge.style.display = 'flex'; }
+  else { badge.style.display = 'none'; }
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toastKatalog');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+window.tambahKeKeranjang = function(produk, btn) {
+  const k   = getKeranjang();
+  const idx = k.findIndex(x => x.id === produk.id);
+
+  if (idx >= 0) {
+    if (k[idx].qty >= produk.stok) {
+      showToast('⚠️ Stok tidak mencukupi!'); return;
+    }
+    k[idx].qty += 1;
+  } else {
+    k.push({ ...produk, qty: 1 });
+  }
+
+  saveKeranjang(k);
+  updateNavBadge();
+
+  // Animasi tombol
+  if (btn) {
+    const total = k.find(x => x.id === produk.id)?.qty || 1;
+    btn.classList.add('ditambah');
+    btn.textContent = `✅ Di keranjang (${total})`;
+    clearTimeout(btn._t);
+    btn._t = setTimeout(() => {
+      btn.classList.remove('ditambah');
+      btn.innerHTML = '🛒 + Keranjang';
+    }, 1800);
+  }
+
+  showToast('🛒 Ditambahkan ke keranjang!');
+};
+
+// Sinkronisasi badge & status tombol saat halaman dimuat
+(function init() {
+  updateNavBadge();
+  // Tandai tombol produk yang sudah ada di keranjang
+  const k = getKeranjang();
+  k.forEach(item => {
+    const btn = document.getElementById('btn-cart-' + item.id);
+    if (btn && item.qty > 0) {
+      btn.classList.add('ditambah');
+      btn.textContent = `✅ Di keranjang (${item.qty})`;
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
