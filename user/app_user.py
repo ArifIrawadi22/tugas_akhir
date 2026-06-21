@@ -102,34 +102,6 @@ def detail(id):
                               .order_by(Produk.rating.desc()).limit(4).all()
     return render_template('detail.html', produk=p, rekomendasi=rekomendasi)
 
-@app.route('/beli/<int:id>', methods=['GET','POST'])
-def beli(id):
-    p = Produk.query.get_or_404(id)
-    if request.method == 'POST':
-        qty = int(request.form.get('jumlah', 1))
-        if qty > p.stok:
-            return render_template('beli.html', produk=p, error='Stok tidak mencukupi!')
-        kode = f"PSN{datetime.now().strftime('%Y%m%d%H%M%S')}{p.id}"
-        pesanan = Pesanan(
-            kode=kode,
-            nama_pembeli=request.form['nama_pembeli'],
-            email=request.form['email'],
-            no_hp=request.form['no_hp'],
-            alamat=request.form['alamat'],
-            total_harga=qty * p.harga,
-            status='Menunggu',
-            tanggal=datetime.now().strftime('%d %b %Y %H:%M')
-        )
-        db.session.add(pesanan)
-        db.session.flush()
-        item = PesananItem(pesanan_id=pesanan.id, produk_id=p.id,
-                           jumlah=qty, harga_saat=p.harga)
-        db.session.add(item)
-        p.stok -= qty
-        p.terjual += qty
-        db.session.commit()
-        return redirect(f'/berhasil/{pesanan.kode}')
-    return render_template('beli.html', produk=p, error='')
 
 @app.route('/berhasil/<kode>')
 def berhasil(kode):
