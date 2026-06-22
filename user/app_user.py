@@ -177,6 +177,15 @@ def keranjang():
     """Halaman keranjang belanja (data disimpan di localStorage browser)"""
     return render_template('keranjang.html')
 
+@app.route('/checkout')
+def checkout():
+    """
+    Halaman checkout multi-produk.
+    Data produk dibaca dari sessionStorage browser (dikirim oleh keranjang.html).
+    Route ini hanya merender template; logika cart ada di JS (checkout.html).
+    """
+    return render_template('checkout.html')
+
 
 # ============================================================
 # OPSIONAL — jika nanti mau checkout multi-produk dari keranjang
