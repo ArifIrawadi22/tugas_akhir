@@ -130,19 +130,4 @@ page_title %}Cek Database{% endblock %} {% block content %}
   </div>
 </div>
 
-<!-- Info Relasi Tabel -->
-<div class="mt-4 p-3" style="background: #ede9fe; border-radius: 12px">
-  <div class="fw-semibold mb-2" style="color: #5b21b6">
-    🔗 Relasi Antar Tabel (Struktur Database)
-  </div>
-  <div style="font-family: monospace; font-size: 0.82rem; color: #4c1d95">
-    produk (id) ←── pesanan_item (produk_id)<br />
-    pesanan (id) ←── pesanan_item (pesanan_id)<br />
-    produk (id) ←── transaksi (produk_id)
-  </div>
-  <div class="mt-2 text-muted small">
-    Semua tabel saling terhubung lewat <strong>foreign key</strong> — inilah
-    yang membuat data semantik dan terstruktur
-  </div>
-</div>
 {% endblock %}

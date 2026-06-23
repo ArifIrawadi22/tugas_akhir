@@ -445,26 +445,144 @@ new Chart(document.getElementById('chartPrediksi'), {
   </div>
 </div>
 
+{% if rdf_data.graph_nodes %}
 <div class="card-stat mb-3">
-  <div class="fw-semibold mb-2">🌐 Struktur Knowledge Graph</div>
-  <div class="small text-muted mb-3">Setiap produk direpresentasikan sebagai entitas dengan relasi semantik:</div>
-  <div class="row g-2">
-    {% for entitas, ikon, warna in [
-      ('schema:Product','📦','#7c3aed'),
-      ('schema:Brand','🏷️','#be185d'),
-      ('schema:Offer (harga)','💰','#15803d'),
-      ('schema:AggregateRating','⭐','#d97706'),
-      ('Identifier (BPOM)','🔖','#0369a1')
-    ] %}
-    <div class="col-md-4">
-      <div class="p-2 text-center" style="background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb">
-        <div style="font-size:1.5rem">{{ ikon }}</div>
-        <div class="small fw-semibold" style="color:{{ warna }}">{{ entitas }}</div>
-      </div>
-    </div>
+  <div class="fw-semibold mb-2">🌐 Visualisasi Knowledge Graph</div>
+  <div class="small text-muted mb-3">
+    Graf nyata dari 4 produk pertama — setiap kotak/lingkaran adalah entitas sungguhan dari database,
+    setiap garis adalah relasi (predikat).
+  </div>
+
+  {% set warna = {
+    'Product': '#7c3aed',
+    'Brand':   '#be185d',
+    'Offer':   '#15803d',
+    'Rating':  '#d97706',
+    'Identifier': '#0369a1'
+  } %}
+
+  {% set produk_nodes = rdf_data.graph_nodes | selectattr('tipe','equalto','Product') | list %}
+  {% set n_prod = produk_nodes | length %}
+
+  {#
+    Layout: tiap produk di kiri (x=160),
+    4 target node menyebar ke kanan dengan offset Y:
+    Brand: atas (dy=-90), Offer: sedikit atas (dy=-30),
+    Rating: sedikit bawah (dy=+30), Identifier: bawah (dy=+90)
+    Jarak antar produk: 220px
+  #}
+
+  <div style="overflow-x:auto">
+  <svg viewBox="0 0 850 {{ n_prod * 220 + 60 }}"
+       xmlns="http://www.w3.org/2000/svg"
+       style="width:100%;min-height:{{ n_prod * 220 + 60 }}px;border:1px solid #e5e7eb;border-radius:10px;background:#fafaf9">
+    <defs>
+      <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+      </marker>
+    </defs>
+
+    {% for prod in produk_nodes %}
+      {% set py = 110 + loop.index0 * 220 %}
+      {% set px = 160 %}
+
+      {# Koordinat 4 target node (fan ke kanan) #}
+      {% set targets = [
+        ('brand',            -90, '#be185d', 'Brand'),
+        ('offers',           -30, '#15803d', 'Offer'),
+        ('aggregateRating',  +30, '#d97706', 'Rating'),
+        ('identifier',       +90, '#0369a1', 'Identifier')
+      ] %}
+
+      {% set prod_edges = rdf_data.graph_edges | selectattr('from','equalto', prod.id) | list %}
+
+      {% for edge in prod_edges %}
+        {% for label_rel, dy, wrn, tipe_nama in targets %}
+          {% if edge.label == label_rel %}
+            {% set tx = 580 %}
+            {% set ty = py + dy %}
+
+            {# Cari node tujuan untuk ambil labelnya #}
+            {% for tnode in rdf_data.graph_nodes %}
+              {% if tnode.id == edge.to %}
+
+                {# Garis dari produk ke target #}
+                <line x1="{{ px + 90 }}" y1="{{ py }}"
+                      x2="{{ tx - 60 }}" y2="{{ ty }}"
+                      stroke="#cbd5e1" stroke-width="1.5"
+                      marker-end="url(#arrowhead)"/>
+
+                {# Label relasi di tengah garis #}
+                {% set mx = ((px + 90 + tx - 60) // 2) %}
+                {% set my = ((py + ty) // 2) %}
+                <rect x="{{ mx - 36 }}" y="{{ my - 9 }}"
+                      width="72" height="18" rx="4"
+                      fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+                <text x="{{ mx }}" y="{{ my + 4 }}"
+                      text-anchor="middle" font-size="9"
+                      fill="#475569" font-family="monospace">{{ label_rel }}</text>
+
+                {# Node target (elips) #}
+                <ellipse cx="{{ tx + 55 }}" cy="{{ ty }}"
+                         rx="60" ry="26"
+                         fill="{{ wrn }}" opacity="0.92"/>
+                <text x="{{ tx + 55 }}" y="{{ ty - 7 }}"
+                      text-anchor="middle" font-size="10"
+                      fill="white" font-family="sans-serif" font-weight="bold">
+                  {{ tnode.label[:16] }}
+                </text>
+                <text x="{{ tx + 55 }}" y="{{ ty + 9 }}"
+                      text-anchor="middle" font-size="8"
+                      fill="rgba(255,255,255,0.8)" font-family="monospace">
+                  {{ tipe_nama }}
+                </text>
+
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+
+      {# Node produk (kotak ungu) di kiri #}
+      <rect x="{{ px - 90 }}" y="{{ py - 32 }}" width="180" height="64"
+            rx="10" fill="#7c3aed" opacity="0.95"
+            filter="drop-shadow(0 2px 4px rgba(124,58,237,0.3))"/>
+      <text x="{{ px }}" y="{{ py - 12 }}"
+            text-anchor="middle" font-size="10"
+            fill="white" font-family="sans-serif" font-weight="bold">
+        {{ prod.label[:22] }}
+      </text>
+      {% if prod.label | length > 22 %}
+      <text x="{{ px }}" y="{{ py + 4 }}"
+            text-anchor="middle" font-size="10"
+            fill="white" font-family="sans-serif" font-weight="bold">
+        {{ prod.label[22:44] }}
+      </text>
+      {% endif %}
+      <text x="{{ px }}" y="{{ py + 22 }}"
+            text-anchor="middle" font-size="8"
+            fill="rgba(255,255,255,0.7)" font-family="monospace">schema:Product</text>
+
     {% endfor %}
+
+    {# Legenda #}
+    {% set legend = [
+      ('Product (schema:Product)', '#7c3aed'),
+      ('Brand (schema:Brand)',     '#be185d'),
+      ('Harga (schema:Offer)',     '#15803d'),
+      ('Rating (schema:AggregateRating)', '#d97706'),
+      ('BPOM (schema:identifier)', '#0369a1')
+    ] %}
+    {% set ly = n_prod * 220 + 35 %}
+    {% for lbl, wrn in legend %}
+      <circle cx="{{ 20 + loop.index0 * 170 }}" cy="{{ ly }}" r="7" fill="{{ wrn }}"/>
+      <text x="{{ 32 + loop.index0 * 170 }}" y="{{ ly + 4 }}"
+            font-size="10" fill="#374151" font-family="sans-serif">{{ lbl[:22] }}</text>
+    {% endfor %}
+  </svg>
   </div>
 </div>
+{% endif %}
 
 <div class="card-stat">
   <div class="d-flex justify-content-between align-items-center mb-2">

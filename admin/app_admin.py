@@ -798,7 +798,7 @@ def ml_dashboard():
         sentimen_data=mle.ringkasan_sentimen_produk() if tab=='sentimen' else {'total':0,'positif':0,'netral':0,'negatif':0,'detail':[]},
         clustering_data=mle.clustering_produk() if tab=='clustering' else {'produk':[],'stats':[]},
         prediksi_data=mle.prediksi_penjualan(3) if tab=='prediksi' else {'historis':[],'prediksi_depan':[],'akurasi':0,'r2':0,'mae':0},
-        rdf_data=mle.buat_knowledge_graph() if tab=='rdf' else {'triple_count':0,'produk_count':0,'turtle_preview':'','turtle_full':''},
+        rdf_data=mle.buat_knowledge_graph() if tab=='rdf' else {'triple_count':0,'produk_count':0,'turtle_preview':'','turtle_full':'','graph_nodes':[],'graph_edges':[]},
         stok_data=mle.prediksi_stok_produk() if tab=='stok' else [],
         rincian_bulan=mle.rincian_penjualan_per_bulan() if tab=='rincian' else []
     )

@@ -33,7 +33,10 @@
 </head>
 <body>
 <div class="sidebar">
-  <div class="brand">💄 Kosmetik Admin</div>
+  <div class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+        <img src="/static/img/download.png" alt="Logo" width="35" height="35">
+      Kosmetik Admin
+  </div>
   <nav class="mt-2">
     <a href="/dashboard" class="{% if request.path=='/dashboard' %}active{% endif %}"><span>📊</span> Dashboard</a>
     <a href="/produk"    class="{% if '/produk' in request.path %}active{% endif %}"><span>🧴</span> Produk</a>

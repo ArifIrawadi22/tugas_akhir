@@ -131,7 +131,10 @@
   </head>
   <body>
     <nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
-      <a class="navbar-brand" href="/katalog">💄 Toko Kosmetik</a>
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+        <img src="/static/img/download.png" alt="Logo" width="35" height="35">
+      𝓉ℴ𝓀ℴ 𝓀ℴ𝓈𝓂ℯ𝓉𝒾𝓀
+      </a>
       <div class="d-flex gap-2">
         <a href="/cek-pesanan" class="btn btn-sm btn-outline-secondary"
           >🔍 Cek Pesanan</a
@@ -271,28 +274,6 @@
                 >✅ {{ produk.bpom_id }}</span
               >
             </div>
-          </div>
-
-          <!-- SEMANTIC WEB BOX -->
-          <div class="semantic-box mb-3">
-            <div class="fw-semibold mb-2">🌐 Data Semantik Produk Ini</div>
-            <p class="mb-1">
-              Halaman ini menggunakan <strong>Schema.org</strong> — standar
-              Semantic Web agar data bisa dibaca mesin:
-            </p>
-            <ul class="mb-2 ps-3" style="line-height: 1.8">
-              <li><code>@type: Product</code> → jenis entitas</li>
-              <li><code>brand</code> → merek produk</li>
-              <li><code>offers.price</code> → harga terstruktur</li>
-              <li><code>identifier</code> → ID BPOM</li>
-              <li><code>aggregateRating</code> → rating semantik</li>
-            </ul>
-            <a
-              href="/api/produk"
-              target="_blank"
-              style="color: #7c3aed; font-size: 0.8rem"
-              >🔗 Lihat semua data API JSON-LD →</a
-            >
           </div>
 
           <!-- Bahan/Ingredients -->

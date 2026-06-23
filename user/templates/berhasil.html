@@ -1,56 +1,137 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Pesanan Berhasil – Toko Kosmetik</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body{background:#fdf4ff;font-family:'Segoe UI',sans-serif;}
-    .navbar-brand{font-weight:700;color:#a855f7!important;}
-    .box{background:#fff;border-radius:16px;padding:2.5rem;box-shadow:0 2px 16px rgba(0,0,0,.07);text-align:center;}
-    .kode-box{background:#ede9fe;border-radius:10px;padding:1rem 2rem;display:inline-block;font-size:1.4rem;font-weight:700;color:#7c3aed;letter-spacing:2px;}
-    .info-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f3e8ff;font-size:.9rem;}
-    .status-badge{padding:.4rem 1rem;border-radius:20px;font-size:.85rem;font-weight:600;}
-    .status-menunggu{background:#fef9c3;color:#854d0e;}
-  </style>
-</head>
-<body>
-<nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
-  <a class="navbar-brand" href="/katalog">💄 Toko Kosmetik</a>
-</nav>
-<div class="container py-5" style="max-width:600px">
-  <div class="box">
-    <div style="font-size:4rem">🎉</div>
-    <h3 class="fw-bold mt-2 mb-1">Pesanan Berhasil!</h3>
-    <p class="text-muted mb-4">Terima kasih {{ pesanan.nama_pembeli }}, pesananmu sudah kami terima.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pesanan Berhasil – Toko Kosmetik</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background: #fdf4ff;
+        font-family: "Segoe UI", sans-serif;
+      }
+      .navbar-brand {
+        font-weight: 700;
+        color: #a855f7 !important;
+      }
+      .box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+        text-align: center;
+      }
+      .kode-box {
+        background: #ede9fe;
+        border-radius: 10px;
+        padding: 1rem 2rem;
+        display: inline-block;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #7c3aed;
+        letter-spacing: 2px;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f3e8ff;
+        font-size: 0.9rem;
+      }
+      .status-badge {
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .status-menunggu {
+        background: #fef9c3;
+        color: #854d0e;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-light bg-white shadow-sm px-4 py-2">
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+        <img src="/static/img/download.png" alt="Logo" width="35" height="35" />
+        𝓉ℴ𝓀ℴ 𝓀ℴ𝓈𝓂ℯ𝓉𝒾𝓀
+      </a>
+    </nav>
+    <div class="container py-5" style="max-width: 600px">
+      <div class="box">
+        <div style="font-size: 4rem">🎉</div>
+        <h3 class="fw-bold mt-2 mb-1">Pesanan Berhasil!</h3>
+        <p class="text-muted mb-4">
+          Terima kasih {{ pesanan.nama_pembeli }}, pesananmu sudah kami terima.
+        </p>
 
-    <div class="mb-4">
-      <div class="text-muted small mb-2">Kode Pesanan Kamu</div>
-      <div class="kode-box">{{ pesanan.kode }}</div>
-      <div class="text-muted small mt-2">Simpan kode ini untuk cek status pesanan</div>
-    </div>
+        <div class="mb-4">
+          <div class="text-muted small mb-2">Kode Pesanan Kamu</div>
+          <div class="kode-box">{{ pesanan.kode }}</div>
+          <div class="text-muted small mt-2">
+            Simpan kode ini untuk cek status pesanan
+          </div>
+        </div>
 
-    <div class="text-start mb-4 p-3" style="background:#f9fafb;border-radius:12px">
-      <div class="info-row"><span class="text-muted">Nama</span><span class="fw-semibold">{{ pesanan.nama_pembeli }}</span></div>
-      <div class="info-row"><span class="text-muted">Email</span><span>{{ pesanan.email }}</span></div>
-      <div class="info-row"><span class="text-muted">No. HP</span><span>{{ pesanan.no_hp }}</span></div>
-      <div class="info-row"><span class="text-muted">Alamat</span><span style="max-width:250px;text-align:right">{{ pesanan.alamat }}</span></div>
-      <div class="info-row"><span class="text-muted">Tanggal</span><span>{{ pesanan.tanggal }}</span></div>
-      <div class="info-row" style="border:none">
-        <span class="text-muted">Total</span>
-        <span class="fw-bold" style="color:#7c3aed;font-size:1.1rem">Rp {{ "{:,.0f}".format(pesanan.total_harga) }}</span>
+        <div
+          class="text-start mb-4 p-3"
+          style="background: #f9fafb; border-radius: 12px"
+        >
+          <div class="info-row">
+            <span class="text-muted">Nama</span
+            ><span class="fw-semibold">{{ pesanan.nama_pembeli }}</span>
+          </div>
+          <div class="info-row">
+            <span class="text-muted">Email</span
+            ><span>{{ pesanan.email }}</span>
+          </div>
+          <div class="info-row">
+            <span class="text-muted">No. HP</span
+            ><span>{{ pesanan.no_hp }}</span>
+          </div>
+          <div class="info-row">
+            <span class="text-muted">Alamat</span
+            ><span style="max-width: 250px; text-align: right"
+              >{{ pesanan.alamat }}</span
+            >
+          </div>
+          <div class="info-row">
+            <span class="text-muted">Tanggal</span
+            ><span>{{ pesanan.tanggal }}</span>
+          </div>
+          <div class="info-row" style="border: none">
+            <span class="text-muted">Total</span>
+            <span class="fw-bold" style="color: #7c3aed; font-size: 1.1rem"
+              >Rp {{ "{:,.0f}".format(pesanan.total_harga) }}</span
+            >
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <span class="status-badge status-menunggu"
+            >⏳ Status: {{ pesanan.status }}</span
+          >
+        </div>
+
+        <div class="d-flex gap-2 justify-content-center">
+          <a href="/cek-pesanan" class="btn btn-outline-secondary"
+            >🔍 Cek Status Pesanan</a
+          >
+          <a
+            href="/katalog"
+            class="btn"
+            style="
+              background: linear-gradient(135deg, #e879a0, #a855f7);
+              color: #fff;
+              border: none;
+            "
+            >Belanja Lagi →</a
+          >
+        </div>
       </div>
     </div>
-
-    <div class="mb-4">
-      <span class="status-badge status-menunggu">⏳ Status: {{ pesanan.status }}</span>
-    </div>
-
-    <div class="d-flex gap-2 justify-content-center">
-      <a href="/cek-pesanan" class="btn btn-outline-secondary">🔍 Cek Status Pesanan</a>
-      <a href="/katalog" class="btn" style="background:linear-gradient(135deg,#e879a0,#a855f7);color:#fff;border:none">Belanja Lagi →</a>
-    </div>
-  </div>
-</div>
-</body>
+  </body>
 </html>

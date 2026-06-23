@@ -363,14 +363,51 @@ def buat_knowledge_graph():
                 g.add((produk_uri, SCHEMA.description, Literal(str(row['deskripsi'])[:200])))
 
         ttl = g.serialize(format='turtle')
+
+        # ============================================
+        # SAMPLE NODE & EDGE NYATA untuk visualisasi graf
+        # Diambil dari 4 produk pertama agar tidak terlalu padat
+        # ============================================
+        graph_nodes = []
+        graph_edges = []
+        for _, row in df.head(4).iterrows():
+            pid = int(row['id'])
+            produk_node_id = f"produk_{pid}"
+            brand_node_id  = f"brand_{row['brand'].replace(' ', '_')}"
+            harga_node_id  = f"harga_{pid}"
+            rating_node_id = f"rating_{pid}"
+            bpom_node_id   = f"bpom_{pid}"
+
+            graph_nodes.append({'id': produk_node_id, 'label': str(row['nama'])[:30], 'tipe': 'Product'})
+            graph_nodes.append({'id': brand_node_id, 'label': str(row['brand']), 'tipe': 'Brand'})
+            graph_nodes.append({'id': harga_node_id, 'label': f"Rp {int(row['harga']):,}", 'tipe': 'Offer'})
+            graph_nodes.append({'id': rating_node_id, 'label': f"★ {row['rating']}", 'tipe': 'Rating'})
+            graph_nodes.append({'id': bpom_node_id, 'label': str(row['bpom_id']), 'tipe': 'Identifier'})
+
+            graph_edges.append({'from': produk_node_id, 'to': brand_node_id, 'label': 'brand'})
+            graph_edges.append({'from': produk_node_id, 'to': harga_node_id, 'label': 'offers'})
+            graph_edges.append({'from': produk_node_id, 'to': rating_node_id, 'label': 'aggregateRating'})
+            graph_edges.append({'from': produk_node_id, 'to': bpom_node_id, 'label': 'identifier'})
+
+        # Hilangkan node brand duplikat (kalau 2 produk brand sama)
+        seen = set()
+        graph_nodes_unik = []
+        for n in graph_nodes:
+            if n['id'] not in seen:
+                seen.add(n['id'])
+                graph_nodes_unik.append(n)
+
         return {
             'triple_count': len(g),
             'produk_count': len(df),
             'turtle_preview': ttl[:2000],
-            'turtle_full': ttl
+            'turtle_full': ttl,
+            'graph_nodes': graph_nodes_unik,
+            'graph_edges': graph_edges
         }
     except Exception as e:
-        return {'error': str(e), 'triple_count': 0}
+        return {'error': str(e), 'triple_count': 0, 'graph_nodes': [], 'graph_edges': []}
+
 
 
 if __name__ == '__main__':
