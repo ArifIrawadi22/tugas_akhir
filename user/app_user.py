@@ -352,7 +352,11 @@ def beli(id):
         p.stok -= qty
         p.terjual += qty
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return f"<pre>{e}</pre>"
         metode = request.form.get('metode_bayar', '')
         if metode == 'Bayar di Tempat (COD)':
             return redirect(f'/berhasil/{pesanan.kode}')   # COD → langsung berhasil
