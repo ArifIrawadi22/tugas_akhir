@@ -14,10 +14,22 @@ import os
 app = Flask(__name__)
 app.secret_key = 'user_rahasia_2024'
 # Database SAMA dengan admin — baca dari file yang sama
+import os
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH  = os.path.join(BASE_DIR, '..', 'kosmetik.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    # Jika di Render → gunakan PostgreSQL
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+else:
+    # Jika di komputer lokal → gunakan SQLite
+    DB_PATH = os.path.join(BASE_DIR, "..", "kosmetik.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
+
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
 
 # =====================
@@ -340,7 +352,11 @@ def beli(id):
         p.stok -= qty
         p.terjual += qty
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return f"<pre>{e}</pre>"
         metode = request.form.get('metode_bayar', '')
         if metode == 'Bayar di Tempat (COD)':
             return redirect(f'/berhasil/{pesanan.kode}')   # COD → langsung berhasil
@@ -374,7 +390,7 @@ def migrasi_otomatis():
                 conn.execute(sa.text("ALTER TABLE pesanan ADD COLUMN status_bayar VARCHAR(20) DEFAULT 'Belum Bayar'"))
                 conn.commit()
             print("✅ Migrasi: kolom 'status_bayar' ditambahkan")
-
+        
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
