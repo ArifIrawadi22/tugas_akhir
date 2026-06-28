@@ -386,13 +386,12 @@ def migrasi_otomatis():
                 conn.commit()
             print("✅ Migrasi: kolom 'status_bayar' ditambahkan")
         
-with app.app_context():
-    db.create_all()
-
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
         migrasi_otomatis()
-        print("=" * 45)
-        print("  TOKO USER berjalan di port 5002")
-        print("  Buka: http://127.0.0.1:5002")
-        print("=" * 45)
-        app.run(debug=True, port=5002)
+    print("=" * 45)
+    print("  TOKO USER berjalan di port 5002")
+    print("  Buka: http://127.0.0.1:5002")
+    print("=" * 45)
+    app.run(debug=True, port=5002)

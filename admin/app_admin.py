@@ -871,13 +871,12 @@ def lihat_rdf():
         kg['turtle_full'],
         mimetype='text/turtle'
     )
-    
-with app.app_context():
-    db.create_all()
 
 if __name__ == '__main__':
-    migrasi_kolom_gambar()
-    import_dataset()
+    with app.app_context():
+        db.create_all()
+        migrasi_kolom_gambar()
+        import_dataset()
     print("=" * 45)
     print("  ADMIN PANEL berjalan di port 5001")
     print("  Buka: http://127.0.0.1:5001")
