@@ -17,6 +17,7 @@ app = Flask(__name__)
 app.secret_key = 'admin_rahasia_2024'
 # Database SAMA — pakai path absolut agar admin & user baca DB yang sama
 import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
