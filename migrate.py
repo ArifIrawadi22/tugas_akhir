@@ -1,30 +1,47 @@
+import os
 import sqlite3
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-# ============================
+# =====================================================
 # KONFIGURASI
-# ============================
+# =====================================================
 
 # File SQLite
-SQLITE_DB = "toko_split/kosmetik.db"
+SQLITE_DB = "kosmetik.db"
 
 # Ganti dengan External Database URL dari Render
 POSTGRES_URL = "postgresql://admin:jwOTsiolyq7fuDJOBBXJ65Yxd3VTiGSq@dpg-d90ib83eo5us73c44sm0-a.oregon-postgres.render.com/kosmetik"
 
-# ============================
+# =====================================================
 
-print("=" * 60)
+print("=" * 70)
 print("MIGRASI SQLITE -> POSTGRESQL")
-print("=" * 60)
+print("=" * 70)
 
-# koneksi sqlite
+# ===============================
+# Cek file SQLite
+# ===============================
+
+print("\nLokasi SQLite :")
+print(os.path.abspath(SQLITE_DB))
+
+if not os.path.exists(SQLITE_DB):
+    print("\nERROR : File SQLite tidak ditemukan!")
+    exit()
+
 sqlite_conn = sqlite3.connect(SQLITE_DB)
 
-# koneksi postgres
+# ===============================
+# PostgreSQL
+# ===============================
+
 pg_engine = create_engine(POSTGRES_URL)
 
-# ambil semua tabel sqlite
+# ===============================
+# Daftar tabel SQLite
+# ===============================
+
 tables = pd.read_sql("""
 SELECT name
 FROM sqlite_master
@@ -35,64 +52,86 @@ AND name NOT LIKE 'sqlite_%'
 print("\nTabel ditemukan:")
 print(tables)
 
-for table in tables["name"]:
+# ===============================
+# Kosongkan PostgreSQL
+# ===============================
 
-    print(f"\nMigrasi tabel : {table}")
+print("\nMenghapus data lama PostgreSQL...")
+
+try:
+    with pg_engine.begin() as conn:
+
+        conn.execute(text("""
+        TRUNCATE TABLE
+        review,
+        pesanan_item,
+        transaksi,
+        pesanan,
+        produk
+        RESTART IDENTITY CASCADE;
+        """))
+
+    print("Berhasil menghapus data lama.\n")
+
+except Exception as e:
+    print("Tidak bisa TRUNCATE (kemungkinan tabel masih kosong).")
+    print(e)
+
+# ===============================
+# Urutan Migrasi
+# ===============================
+
+urutan = [
+    "produk",
+    "pesanan",
+    "transaksi",
+    "pesanan_item",
+    "review"
+]
+
+# ===============================
+# Migrasi
+# ===============================
+
+for tabel in urutan:
+
+    if tabel not in tables["name"].values:
+        print(f"\nLewati {tabel} (tidak ada)")
+        continue
+
+    print("=" * 60)
+    print("Migrasi :", tabel)
+
+    df = pd.read_sql(f"SELECT * FROM {tabel}", sqlite_conn)
+
+    print("Jumlah data :", len(df))
+
+    if len(df) == 0:
+        print("Tidak ada data.")
+        continue
 
     try:
 
-        df = pd.read_sql(f"SELECT * FROM {table}", sqlite_conn)
-
-        print(f"Jumlah data : {len(df)}")
-
         df.to_sql(
-            table,
+            tabel,
             pg_engine,
-            if_exists="replace",
-            index=False
+            if_exists="append",
+            index=False,
+            method="multi",
+            chunksize=500
         )
 
-        print("Berhasil")
+        print("✓ Berhasil")
 
     except Exception as e:
 
-        print("Gagal")
+        print("✗ Gagal")
         print(e)
-
-print("\nMigrasi selesai.")
-
-# ============================
-# UPDATE SEQUENCE POSTGRES
-# ============================
-
-with pg_engine.begin() as conn:
-
-    for table in tables["name"]:
-
-        try:
-
-            cols = pd.read_sql(
-                f"SELECT * FROM {table} LIMIT 1",
-                sqlite_conn
-            ).columns
-
-            if "id" in cols:
-
-                conn.execute(text(f"""
-                SELECT setval(
-                    pg_get_serial_sequence('{table}','id'),
-                    COALESCE(MAX(id),1)
-                )
-                FROM {table};
-                """))
-
-                print(f"Sequence {table} diperbaiki.")
-
-        except:
-            pass
+        break
 
 sqlite_conn.close()
 
-print("=" * 60)
-print("SELESAI")
-print("=" * 60)
+print("\n")
+print("=" * 70)
+print("MIGRASI SELESAI")
+print("=" * 70)
