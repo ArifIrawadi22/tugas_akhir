@@ -1,57 +1,44 @@
+import os
 import sqlite3
-import psycopg2
+import pandas as pd
+from sqlalchemy import create_engine
 
-# SQLite
-sqlite_conn = sqlite3.connect("kosmetik.db")
-sqlite_conn.row_factory = sqlite3.Row
-sqlite_cur = sqlite_conn.cursor()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# PostgreSQL
-pg_conn = psycopg2.connect(
-    host="dpg-d90ib83eo5us73c44sm0-a",
-    database="kosmetik",
-    user="admin",
-    password="jwOTsiolyq7fuDJOBBXJ65Yxd3VTiGSq",
-    port=5432
-)
+if DATABASE_URL is None:
+    raise Exception("DATABASE_URL belum ada.")
 
-pg_cur = pg_conn.cursor()
+sqlite_db = "kosmetik.db"
+
+sqlite_conn = sqlite3.connect(sqlite_db)
+
+postgres_engine = create_engine(DATABASE_URL)
 
 tables = [
     "produk",
-    "pesanan",
     "transaksi",
+    "pesanan",
     "pesanan_item",
     "review"
 ]
 
 for table in tables:
 
-    sqlite_cur.execute(f"SELECT * FROM {table}")
-    rows = sqlite_cur.fetchall()
+    print(f"Memindahkan {table}...")
 
-    if not rows:
-        continue
+    df = pd.read_sql(f"SELECT * FROM {table}", sqlite_conn)
 
-    cols = rows[0].keys()
+    df.to_sql(
+        table,
+        postgres_engine,
+        if_exists="replace",
+        index=False
+    )
 
-    col_string = ",".join(cols)
-    place = ",".join(["%s"] * len(cols))
-
-    sql = f"""
-    INSERT INTO {table}
-    ({col_string})
-    VALUES ({place})
-    """
-
-    for row in rows:
-        pg_cur.execute(sql, tuple(row))
-
-    pg_conn.commit()
-
-    print(f"{table} selesai ({len(rows)} data)")
+    print(f"{table} selesai ({len(df)} data)")
 
 sqlite_conn.close()
-pg_conn.close()
 
-print("Migrasi selesai")
+print("===================================")
+print("MIGRASI BERHASIL")
+print("===================================")
