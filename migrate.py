@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, text
 # ============================
 
 # File SQLite
-SQLITE_DB = "kosmetik.db"
+SQLITE_DB = "toko_split/kosmetik.db"
 
 # Ganti dengan External Database URL dari Render
 POSTGRES_URL = "postgresql://admin:jwOTsiolyq7fuDJOBBXJ65Yxd3VTiGSq@dpg-d90ib83eo5us73c44sm0-a.oregon-postgres.render.com/kosmetik"
