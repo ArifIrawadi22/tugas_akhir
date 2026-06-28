@@ -220,14 +220,13 @@ def clustering_produk(n_clusters=3):
 # =============================================
 # 4. PREDIKSI PENJUALAN
 # =============================================
-def prediksi_penjualan(bulan_ke_depan=3):
+def prediksi_penjualan(bulan_ke_depan=4):
     """
     Prediksi omzet penjualan bulan-bulan ke depan
-    Menggunakan Linear Regression dari data transaksi historis
+    Menggunakan Random Forest dari data transaksi historis
     """
-    from sklearn.linear_model import LinearRegression
+    from sklearn.ensemble import RandomForestRegressor
     from sklearn.metrics import mean_absolute_error, r2_score
-
     conn = get_conn()
     df = pd.read_sql("""
         SELECT tanggal, SUM(total) as omzet, SUM(jumlah) as unit
@@ -241,10 +240,19 @@ def prediksi_penjualan(bulan_ke_depan=3):
         return {'error': 'Data transaksi kurang, minimal 3 bulan'}
 
     df['bulan_ke'] = range(1, len(df) + 1)
-    X = df[['bulan_ke']]
+    df['lag1'] = df['omzet'].shift(1)
+    df['ma3'] = df['omzet'].rolling(3).mean()
+
+    df = df.dropna()
+
+    X = df[['bulan_ke', 'lag1', 'ma3']]
     y = df['omzet']
 
-    model = LinearRegression()
+    model = RandomForestRegressor(
+    n_estimators=200,
+    random_state=42
+)
+
     model.fit(X, y)
 
     y_pred_train = model.predict(X)
@@ -268,12 +276,12 @@ def prediksi_penjualan(bulan_ke_depan=3):
                        'Jul','Ags','Sep','Okt','Nov','Des']
 
     historis = []
-    for _, row in df.iterrows():
-        historis.append({
-            'bulan': bulan_map.get(row['tanggal'], row['tanggal']),
-            'omzet': round(float(row['omzet']), 0),
-            'prediksi': round(float(y_pred_train[row['bulan_ke']-1]), 0)
-        })
+    for i, (_, row) in enumerate(df.iterrows()):
+      historis.append({
+        'bulan': bulan_map.get(row['tanggal'], row['tanggal']),
+        'omzet': round(float(row['omzet']), 0),
+        'prediksi': round(float(y_pred_train[i]), 0)
+    })
 
     # Prediksi ke depan
     max_bln = len(df)
@@ -287,7 +295,11 @@ def prediksi_penjualan(bulan_ke_depan=3):
             bln = 1
             thn += 1
         bln_ke = max_bln + i
-        omzet_pred = float(model.predict([[bln_ke]])[0])
+        lag1 = df['omzet'].iloc[-1]
+        ma3 = df['omzet'].tail(3).mean()
+
+        omzet_pred = float(model.predict([[bln_ke, lag1, ma3]])[0]
+)
         prediksi_depan.append({
             'bulan': f"{nama_bulan_urut[bln-1]} {thn}",
             'prediksi': max(omzet_pred, 0)
@@ -447,10 +459,10 @@ def prediksi_stok_produk():
     """
     Prediksi berapa unit tiap produk akan terjual bulan depan,
     dibandingkan dengan stok saat ini.
-    Menggunakan rata-rata tren penjualan 3 bulan terakhir + regresi sederhana.
+    Menggunakan rata-rata tren penjualan 3 bulan terakhir + random forest.
     Output: rekomendasi RESTOCK / AMAN / KELEBIHAN STOK
     """
-    from sklearn.linear_model import LinearRegression
+    from sklearn.ensemble import RandomForestRegressor
 
     conn = get_conn()
     df_trans = pd.read_sql("""
@@ -510,7 +522,10 @@ def prediksi_stok_produk():
             X = data_produk[['bulan_ke']]
             y = data_produk['jumlah']
             try:
-                model = LinearRegression()
+                model = RandomForestRegressor(
+                    n_estimators=100,
+                    random_state=42
+                )
                 model.fit(X, y)
                 pred = model.predict(pd.DataFrame({'bulan_ke':[len(data_produk)+1]}))[0]
                 prediksi_unit = max(0, int(round(pred)))
@@ -534,7 +549,7 @@ def prediksi_stok_produk():
             status, warna = 'PERLU RESTOCK', 'danger'
         elif selisih < prediksi_unit * 0.3:
             status, warna = 'Stok Pas-pasan', 'warning'
-        elif selisih > prediksi_unit * 2:
+        elif stok_sekarang > prediksi_unit * 5:
             status, warna = 'KELEBIHAN STOK', 'info'
         else:
             status, warna = 'Stok Aman', 'success'
@@ -633,7 +648,7 @@ def rincian_penjualan_per_bulan():
         # Produk terlaris bulan ini (top 5)
         per_produk = df_bulan.groupby(['nama','brand','tipe']).agg(
             unit=('jumlah','sum'), omzet=('total','sum')
-        ).reset_index().sort_values('unit', ascending=False).head(5)
+        ).reset_index().sort_values('unit', ascending=False)
         produk_terlaris = [{
             'nama': row['nama'],
             'brand': row['brand'],

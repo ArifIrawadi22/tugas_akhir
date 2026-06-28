@@ -1,0 +1,155 @@
+{% extends 'base_user.html' %}
+{% block title %}Selesaikan Pembayaran – Toko Kosmetik{% endblock %}
+{% block content %}
+
+{% set is_qris    = 'QRIS' in pesanan.metode_bayar %}
+{% set is_bca     = 'BCA' in pesanan.metode_bayar %}
+{% set is_bri     = 'BRI' in pesanan.metode_bayar %}
+{% set is_mandiri = 'Mandiri' in pesanan.metode_bayar %}
+{% set is_transfer = is_bca or is_bri or is_mandiri %}
+
+<div class="container py-4" style="max-width:560px">
+
+  <!-- Langkah -->
+  <div class="d-flex align-items-center gap-2 mb-4" style="font-size:.85rem;color:#9ca3af">
+    <span style="color:#7c3aed;font-weight:600">① Pilih Produk</span>
+    <span>→</span>
+    <span style="color:#7c3aed;font-weight:600">② Isi Data</span>
+    <span>→</span>
+    <span style="color:#7c3aed;font-weight:600;text-decoration:underline">③ Bayar</span>
+    <span>→</span>
+    <span>④ Selesai</span>
+  </div>
+
+  <div style="background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.09);padding:2rem">
+
+    <!-- Header -->
+    <div class="text-center mb-4">
+      <div style="font-size:2.5rem">
+        {% if is_qris %}🔳{% else %}🏦{% endif %}
+      </div>
+      <h5 class="fw-bold mt-1 mb-0">Selesaikan Pembayaran</h5>
+      <div class="text-muted small">via {{ pesanan.metode_bayar }}</div>
+    </div>
+
+    <!-- Total -->
+    <div class="text-center p-3 mb-4 rounded-3"
+         style="background:#f5f3ff;border:1.5px dashed #a78bfa">
+      <div class="text-muted small mb-1">Total yang harus dibayar</div>
+      <div style="font-size:1.8rem;font-weight:700;color:#7c3aed">
+        Rp {{ "{:,.0f}".format(pesanan.total_harga) }}
+      </div>
+      <div class="text-muted small mt-1">Kode: {{ pesanan.kode }}</div>
+    </div>
+
+    {# ====== TRANSFER BANK ====== #}
+    {% if is_transfer %}
+    <div class="mb-4">
+      <div class="fw-semibold mb-3">📋 Informasi Transfer</div>
+
+      {% if is_bca %}
+      <div class="p-3 rounded-3 mb-2" style="background:#f0f9ff;border:1px solid #bae6fd">
+        <div class="small text-muted">Bank BCA</div>
+        <div class="fw-bold" style="font-size:1.1rem;letter-spacing:2px">1234 5678 90</div>
+        <div class="small">a/n Toko Kosmetik Indonesia</div>
+      </div>
+      {% elif is_bri %}
+      <div class="p-3 rounded-3 mb-2" style="background:#f0fdf4;border:1px solid #bbf7d0">
+        <div class="small text-muted">Bank BRI</div>
+        <div class="fw-bold" style="font-size:1.1rem;letter-spacing:2px">0987 6543 210</div>
+        <div class="small">a/n Toko Kosmetik Indonesia</div>
+      </div>
+      {% elif is_mandiri %}
+      <div class="p-3 rounded-3 mb-2" style="background:#fffbeb;border:1px solid #fde68a">
+        <div class="small text-muted">Bank Mandiri</div>
+        <div class="fw-bold" style="font-size:1.1rem;letter-spacing:2px">1122 3344 5566</div>
+        <div class="small">a/n Toko Kosmetik Indonesia</div>
+      </div>
+      {% endif %}
+
+      <div class="p-2 rounded-3 text-center mt-3 small"
+           style="background:#fef9c3;color:#854d0e">
+        ⚠️ Transfer tepat nominal di atas agar mudah dikonfirmasi.<br>
+        Sertakan <strong>{{ pesanan.kode }}</strong> di keterangan transfer.
+      </div>
+    </div>
+    {% endif %}
+
+    {# ====== QRIS ====== #}
+    {% if is_qris %}
+    <div class="text-center mb-4">
+      <div class="fw-semibold mb-3">🔳 Scan QR Code untuk Membayar</div>
+      <!--
+        Untuk produksi nyata, ganti src di bawah dengan QR code asli dari
+        payment gateway (Midtrans, Xendit, dll).
+        Saat ini menggunakan QR placeholder dari qr-code API publik.
+      -->
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ pesanan.kode }}-{{ pesanan.total_harga|int }}-TOKOKOSMETIK"
+           alt="QR Code Pembayaran"
+           style="width:200px;height:200px;border:4px solid #7c3aed;border-radius:12px"
+           onerror="this.src='';this.alt='QR tidak dapat dimuat — hubungi penjual'">
+      <div class="text-muted small mt-2">
+        Scan menggunakan aplikasi bank, GoPay, OVO, Dana, atau aplikasi QRIS lainnya
+      </div>
+      <div class="p-2 rounded-3 mt-3 small"
+           style="background:#fef9c3;color:#854d0e">
+        ⚠️ Jangan tutup halaman ini sebelum pembayaran selesai.
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Cara konfirmasi -->
+    <div class="p-3 rounded-3 mb-4" style="background:#f9fafb;border:1px solid #e5e7eb">
+      <div class="fw-semibold small mb-2">📌 Langkah Selanjutnya</div>
+      <ol class="small mb-0" style="color:#6b7280;padding-left:1.2rem">
+        {% if is_transfer %}
+        <li>Transfer nominal tepat ke rekening di atas</li>
+        <li>Simpan bukti transfer kamu</li>
+        <li>Admin akan memverifikasi pembayaran</li>
+        <li>Setelah dikonfirmasi, pesanan akan diproses</li>
+        {% elif is_qris %}
+        <li>Scan QR code dengan aplikasi pembayaran kamu</li>
+        <li>Selesaikan pembayaran sesuai nominal</li>
+        <li>Admin akan memverifikasi pembayaran</li>
+        <li>Setelah dikonfirmasi, pesanan akan diproses</li>
+        {% endif %}
+      </ol>
+    </div>
+
+    <!-- Cek status -->
+    <div class="text-center">
+      <div class="text-muted small mb-3">
+        Sudah transfer? Admin akan mengkonfirmasi dan halaman ini
+        otomatis akan menampilkan status pesananmu.
+      </div>
+      <a href="/cek-pesanan" class="btn btn-outline-secondary btn-sm me-2">
+        🔍 Cek Status Pesanan
+      </a>
+      <a href="/katalog" class="btn btn-sm" style="background:#f3f4f6;color:#374151">
+        ← Katalog
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{# Auto-cek setiap 10 detik apakah admin sudah konfirmasi bayar #}
+<script>
+(function() {
+  let cek = 0;
+  const interval = setInterval(async () => {
+    cek++;
+    if (cek > 60) { clearInterval(interval); return; } // max 10 menit
+    try {
+      const r = await fetch('/cek-status-bayar/{{ pesanan.kode }}');
+      const d = await r.json();
+      if (d.sudah_bayar) {
+        clearInterval(interval);
+        window.location.href = '/berhasil/{{ pesanan.kode }}';
+      }
+    } catch(e) {}
+  }, 10000); // cek tiap 10 detik
+})();
+</script>
+
+{% endblock %}

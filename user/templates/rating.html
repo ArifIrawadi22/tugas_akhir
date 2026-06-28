@@ -1,7 +1,7 @@
 {% extends 'base_user.html' %}
 {% block title %}Beri Ulasan – Toko Kosmetik{% endblock %}
 {% block content %}
-<div class="container py-4" style="max-width:600px">
+<div class="container py-4" style="max-width:650px">
   <h4 class="fw-bold mb-4">⭐ Beri Rating & Ulasan</h4>
 
   {% if sukses %}
@@ -21,71 +21,92 @@
   </div>
 
   {% else %}
-  <!-- Info Produk -->
-  {% for item in pesanan.items %}
-  <div class="d-flex gap-3 align-items-center mb-4 p-3"
-       style="background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.06)">
-    <div style="font-size:2.5rem">
-      {% if item.produk.tipe=='serum' %}🧪{% elif item.produk.tipe=='toner' %}💧{% else %}🫧{% endif %}
-    </div>
-    <div>
-      <div class="fw-semibold">{{ item.produk.nama[:55] if item.produk else '-' }}</div>
-      <div class="text-muted small">{{ item.produk.brand if item.produk else '' }} • {{ item.jumlah }}x dibeli</div>
-    </div>
-  </div>
-  {% endfor %}
+  {# ============================================================
+     SEBELUM: satu form rating untuk semua produk (duplikat)
+     SESUDAH: tiap produk punya bintang + komentar masing-masing
+  ============================================================ #}
+  <form method="POST">
+    {% for item in pesanan.items %}
+    {% set pid = item.produk_id %}
+    <div class="mb-4 p-3" style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,.07)">
 
-  <!-- Form Rating -->
-  <div style="background:#fff;border-radius:16px;padding:2rem;box-shadow:0 2px 16px rgba(0,0,0,.07)">
-    <form method="POST">
-      <!-- Pilih Bintang -->
-      <div class="mb-4 text-center">
-        <div class="fw-semibold mb-2">Berikan penilaianmu</div>
-        <div class="d-flex justify-content-center gap-2" id="starRow">
-          {% for i in range(1,6) %}
-          <label style="cursor:pointer;font-size:2.5rem;color:#d1d5db;transition:.15s" class="star-label" data-val="{{ i }}">★</label>
-          {% endfor %}
+      <!-- Info Produk -->
+      <div class="d-flex gap-3 align-items-center mb-3">
+        <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;background:#fdf4ff;
+                    display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          {% if item.produk and item.produk.gambar %}
+          <img src="/static/uploads/{{ item.produk.gambar }}" style="width:100%;height:100%;object-fit:cover">
+          {% else %}
+          <span style="font-size:1.6rem">
+            {% if item.produk and item.produk.tipe=='serum' %}🧪
+            {% elif item.produk and item.produk.tipe=='toner' %}💧
+            {% else %}🫧{% endif %}
+          </span>
+          {% endif %}
         </div>
-        <input type="hidden" name="rating" id="ratingVal" value="5" required>
-        <div class="text-muted small mt-1" id="ratingText">Sangat Bagus ⭐⭐⭐⭐⭐</div>
+        <div>
+          <div class="fw-semibold">{{ item.produk.nama[:55] if item.produk else '-' }}</div>
+          <div class="text-muted small">{{ item.produk.brand if item.produk else '' }} • {{ item.jumlah }}x dibeli</div>
+        </div>
       </div>
 
-      <!-- Komentar -->
-      <div class="mb-4">
-        <label class="fw-semibold small d-block mb-2">Tulis ulasanmu</label>
-        <textarea name="komentar" class="form-control" rows="4" maxlength="300"
-                  placeholder="Contoh: Produknya bagus, cocok di kulit saya, teksturnya ringan..."
+      <!-- Pilih Bintang per produk -->
+      <div class="mb-3 text-center">
+        <div class="fw-semibold small mb-2">Rating untuk produk ini</div>
+        <div class="d-flex justify-content-center gap-2 star-row" id="starRow_{{ pid }}" data-pid="{{ pid }}">
+          {% for i in range(1,6) %}
+          <label style="cursor:pointer;font-size:2rem;color:#d1d5db;transition:.15s"
+                 class="star-label" data-val="{{ i }}">★</label>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="rating_{{ pid }}" id="ratingVal_{{ pid }}" value="5">
+        <div class="text-muted small mt-1" id="ratingText_{{ pid }}">Sangat Bagus 🤩</div>
+      </div>
+
+      <!-- Komentar per produk -->
+      <div>
+        <label class="fw-semibold small d-block mb-1">Tulis ulasan untuk produk ini</label>
+        <textarea name="komentar_{{ pid }}" class="form-control" rows="3"
+                  maxlength="300" placeholder="Ceritakan pengalamanmu dengan produk ini..."
                   required></textarea>
         <div class="text-muted small mt-1">Maksimal 300 karakter</div>
       </div>
+    </div>
+    {% endfor %}
 
-      <button type="submit" class="btn btn-pink w-100 py-2">
-        ⭐ Kirim Ulasan
-      </button>
-    </form>
-  </div>
+    <button type="submit" class="btn btn-pink w-100 py-2 mt-2">
+      ⭐ Kirim Semua Ulasan
+    </button>
+  </form>
   {% endif %}
 </div>
 
 <script>
 const labels = ['','Buruk 😞','Kurang 😕','Cukup 😊','Bagus 😍','Sangat Bagus 🤩'];
-const stars  = document.querySelectorAll('.star-label');
-let selected = 5;
 
-function renderStars(val) {
+// Jalankan untuk tiap baris bintang
+document.querySelectorAll('.star-row').forEach(row => {
+  const pid     = row.dataset.pid;
+  const stars   = row.querySelectorAll('.star-label');
+  const input   = document.getElementById('ratingVal_' + pid);
+  const text    = document.getElementById('ratingText_' + pid);
+  let selected  = 5;
+
+  function renderStars(val) {
+    stars.forEach((s, i) => {
+      s.style.color     = i < val ? '#f59e0b' : '#d1d5db';
+      s.style.transform = i < val ? 'scale(1.1)' : 'scale(1)';
+    });
+    input.value  = val;
+    text.textContent = labels[val];
+  }
+
   stars.forEach((s, i) => {
-    s.style.color = i < val ? '#f59e0b' : '#d1d5db';
-    s.style.transform = i < val ? 'scale(1.1)' : 'scale(1)';
+    s.addEventListener('mouseover', () => renderStars(i + 1));
+    s.addEventListener('click',     () => { selected = i + 1; renderStars(i + 1); });
   });
-  document.getElementById('ratingVal').value = val;
-  document.getElementById('ratingText').textContent = labels[val] + ' ' + '⭐'.repeat(val);
-}
-
-stars.forEach((s, i) => {
-  s.addEventListener('mouseover', () => renderStars(i+1));
-  s.addEventListener('click', () => { selected = i+1; renderStars(i+1); });
+  row.addEventListener('mouseleave', () => renderStars(selected));
+  renderStars(5); // default
 });
-document.getElementById('starRow').addEventListener('mouseleave', () => renderStars(selected));
-renderStars(5);
 </script>
 {% endblock %}

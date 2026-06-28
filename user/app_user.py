@@ -48,7 +48,9 @@ class Pesanan(db.Model):
     alamat       = db.Column(db.Text)
     total_harga  = db.Column(db.Float)
     status       = db.Column(db.String(20), default='Menunggu')
+    status_bayar = db.Column(db.String(20), default='Belum Bayar')
     tanggal      = db.Column(db.String(30))
+    metode_bayar = db.Column(db.String(50), default='')  # ← baru
     items        = db.relationship('PesananItem', backref='pesanan')
 
 class PesananItem(db.Model):
@@ -84,7 +86,7 @@ def katalog():
     cari = request.args.get('cari','')
     tipe = request.args.get('tipe','')
     sort = request.args.get('sort','terlaris')
-    query = Produk.query.filter(Produk.stok > 0)
+    query = Produk.query.filter()
     if cari: query = query.filter(Produk.nama.ilike(f'%{cari}%')|Produk.brand.ilike(f'%{cari}%'))
     if tipe: query = query.filter(Produk.tipe==tipe)
     if sort=='termurah': query = query.order_by(Produk.harga.asc())
@@ -108,6 +110,23 @@ def detail(id):
 def berhasil(kode):
     pesanan = Pesanan.query.filter_by(kode=kode).first_or_404()
     return render_template('berhasil.html', pesanan=pesanan)
+
+@app.route('/cek-status-bayar/<kode>')
+def cek_status_bayar(kode):
+    """API untuk browser cek apakah admin sudah konfirmasi bayar"""
+    pesanan = Pesanan.query.filter_by(kode=kode).first()
+    if not pesanan:
+        return jsonify({'sudah_bayar': False})
+    return jsonify({'sudah_bayar': pesanan.status_bayar == 'Sudah Bayar'})
+
+@app.route('/bayar/<kode>')
+def bayar(kode):
+    """Halaman selesaikan pembayaran — untuk transfer bank dan QRIS"""
+    pesanan = Pesanan.query.filter_by(kode=kode).first_or_404()
+    # Kalau sudah dibayar (admin konfirmasi), redirect ke berhasil
+    if pesanan.status_bayar == 'Sudah Bayar':
+        return redirect(f'/berhasil/{kode}')
+    return render_template('bayar.html', pesanan=pesanan)
 
 @app.route('/cek-pesanan', methods=['GET','POST'])
 def cek_pesanan():
@@ -137,27 +156,41 @@ def beri_rating(kode):
     pesanan = Pesanan.query.filter_by(kode=kode).first_or_404()
     if pesanan.status != 'Selesai':
         return redirect(f'/cek-pesanan')
-    # Cek sudah pernah review belum
+
     sudah = Review.query.filter_by(pesanan_id=pesanan.id).first()
+
     if request.method == 'POST' and not sudah:
+        # ── SEBELUM: satu rating/komentar untuk semua produk ──
+        # ── SESUDAH: tiap produk punya rating & komentar sendiri ──
         for item in pesanan.items:
+            pid = item.produk_id
+            # Ambil rating & komentar per produk dari form
+            rating_val  = int(request.form.get(f'rating_{pid}', 5))
+            komentar_val = request.form.get(f'komentar_{pid}', '').strip()
+            if not komentar_val:
+                continue  # skip produk yang tidak diisi
+
             rv = Review(
                 pesanan_id=pesanan.id,
-                produk_id=item.produk_id,
+                produk_id=pid,
                 nama=pesanan.nama_pembeli,
-                rating=int(request.form.get('rating', 5)),
-                komentar=request.form.get('komentar','').strip(),
+                rating=rating_val,
+                komentar=komentar_val,
                 tanggal=datetime.now().strftime('%d %b %Y')
             )
             db.session.add(rv)
+
             # Update rata-rata rating produk
             p = item.produk
-            semua_review = Review.query.filter_by(produk_id=p.id).all()
-            total_r = sum(r.rating for r in semua_review) + rv.rating
-            jumlah_r = len(semua_review) + 1
-            p.rating = round(total_r / jumlah_r, 1)
+            if p:
+                semua_review = Review.query.filter_by(produk_id=p.id).all()
+                total_r  = sum(r.rating for r in semua_review) + rating_val
+                jumlah_r = len(semua_review) + 1
+                p.rating = round(total_r / jumlah_r, 1)
+
         db.session.commit()
         return redirect(f'/rating/{kode}?sukses=1')
+
     return render_template('rating.html', pesanan=pesanan,
                            sudah=sudah, sukses=request.args.get('sukses'))
     
@@ -186,7 +219,6 @@ def checkout():
     """
     return render_template('checkout.html')
 
-
 # ============================================================
 # OPSIONAL — jika nanti mau checkout multi-produk dari keranjang
 # Data dikirim via POST (JSON) dari JavaScript
@@ -206,17 +238,20 @@ def checkout_keranjang():
     if not data:
         return jsonify({'ok': False, 'pesan': 'Data kosong'}), 400
 
-    items      = data.get('items', [])
-    nama       = data.get('nama_pembeli', '').strip()
-    email      = data.get('email', '').strip()
-    no_hp      = data.get('no_hp', '').strip()
-    alamat     = data.get('alamat', '').strip()
+    items        = data.get('items', [])
+    nama         = data.get('nama_pembeli', '').strip()
+    email        = data.get('email', '').strip()
+    no_hp        = data.get('no_hp', '').strip()
+    alamat       = data.get('alamat', '').strip()
+    metode_bayar = data.get('metode_bayar', '').strip()
 
     if not items or not nama or not alamat:
         return jsonify({'ok': False, 'pesan': 'Lengkapi data pembeli'}), 400
 
     total = 0
     kode  = f"PSN{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    is_cod = metode_bayar == 'Bayar di Tempat (COD)'
 
     pesanan = Pesanan(
         kode=kode,
@@ -226,6 +261,8 @@ def checkout_keranjang():
         alamat=alamat,
         total_harga=0,
         status='Menunggu',
+        metode_bayar=metode_bayar,
+        status_bayar='Sudah Bayar' if is_cod else 'Belum Bayar',
         tanggal=datetime.now().strftime('%d %b %Y %H:%M')
     )
     db.session.add(pesanan)
@@ -248,7 +285,13 @@ def checkout_keranjang():
 
     pesanan.total_harga = total
     db.session.commit()
-    return jsonify({'ok': True, 'kode': kode, 'redirect': f'/berhasil/{kode}'})
+    
+    # COD → langsung berhasil, Transfer/QRIS → halaman bayar
+    if is_cod:
+        return jsonify({'ok': True, 'kode': kode, 'redirect': f'/berhasil/{kode}'})
+    else:
+        return jsonify({'ok': True, 'kode': kode, 'redirect': f'/bayar/{kode}'})
+    
 @app.route('/beli/<int:id>', methods=['GET','POST'])
 def beli(id):
     p = Produk.query.get_or_404(id)
@@ -278,6 +321,7 @@ def beli(id):
             alamat=request.form['alamat'],
             total_harga=total,
             status='Menunggu',
+            metode_bayar=request.form.get('metode_bayar',''),
             tanggal=datetime.now().strftime('%d %b %Y %H:%M')
         )
 
@@ -297,12 +341,44 @@ def beli(id):
         p.terjual += qty
 
         db.session.commit()
-        return redirect(f'/berhasil/{pesanan.kode}')
+        metode = request.form.get('metode_bayar', '')
+        if metode == 'Bayar di Tempat (COD)':
+            return redirect(f'/berhasil/{pesanan.kode}')   # COD → langsung berhasil
+        else:
+            return redirect(f'/bayar/{pesanan.kode}')       # Transfer/QRIS → halaman bayar
 
     return render_template('beli.html', produk=p, error='')
+
+def migrasi_otomatis():
+    """Tambah kolom baru ke database lama yang belum punya"""
+    import sqlalchemy as sa
+    inspector = sa.inspect(db.engine)
+    # Kolom gambar di tabel produk
+    if 'produk' in inspector.get_table_names():
+        kolom_ada = [c['name'] for c in inspector.get_columns('produk')]
+        if 'gambar' not in kolom_ada:
+            with db.engine.connect() as conn:
+                conn.execute(sa.text('ALTER TABLE produk ADD COLUMN gambar VARCHAR(200)'))
+                conn.commit()
+            print("✅ Migrasi: kolom 'gambar' ditambahkan")
+    # Kolom metode_bayar di tabel pesanan
+    if 'pesanan' in inspector.get_table_names():
+        kolom_ada = [c['name'] for c in inspector.get_columns('pesanan')]
+        if 'metode_bayar' not in kolom_ada:
+            with db.engine.connect() as conn:
+                conn.execute(sa.text("ALTER TABLE pesanan ADD COLUMN metode_bayar VARCHAR(50) DEFAULT ''"))
+                conn.commit()
+            print("✅ Migrasi: kolom 'metode_bayar' ditambahkan")
+        if 'status_bayar' not in kolom_ada:
+            with db.engine.connect() as conn:
+                conn.execute(sa.text("ALTER TABLE pesanan ADD COLUMN status_bayar VARCHAR(20) DEFAULT 'Belum Bayar'"))
+                conn.commit()
+            print("✅ Migrasi: kolom 'status_bayar' ditambahkan")
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        migrasi_otomatis()
     print("=" * 45)
     print("  TOKO USER berjalan di port 5002")
     print("  Buka: http://127.0.0.1:5002")

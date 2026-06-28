@@ -1,7 +1,5 @@
-{% extends 'base.html' %}
-{% block title %}Kelola Pesanan{% endblock %}
-{% block page_title %}Kelola Pesanan Masuk{% endblock %}
-{% block content %}
+{% extends 'base.html' %} {% block title %}Kelola Pesanan{% endblock %} {% block
+page_title %}Kelola Pesanan Masuk{% endblock %} {% block content %}
 
 <!-- Tombol Export -->
 <div class="mb-3 text-end">
@@ -15,25 +13,29 @@
   <div class="col-md-3">
     <div class="card-stat">
       <div class="text-muted small mb-1">Total Pesanan</div>
-      <div class="fs-2 fw-bold" style="color:#7c3aed">{{ total_pesanan }}</div>
+      <div class="fs-2 fw-bold" style="color: #7c3aed">{{ total_pesanan }}</div>
     </div>
   </div>
   <div class="col-md-3">
     <div class="card-stat">
       <div class="text-muted small mb-1">Menunggu Konfirmasi</div>
-      <div class="fs-2 fw-bold" style="color:#d97706">{{ total_menunggu }}</div>
+      <div class="fs-2 fw-bold" style="color: #d97706">
+        {{ total_menunggu }}
+      </div>
     </div>
   </div>
   <div class="col-md-3">
     <div class="card-stat">
       <div class="text-muted small mb-1">Sedang Diproses</div>
-      <div class="fs-2 fw-bold" style="color:#2563eb">{{ total_diproses }}</div>
+      <div class="fs-2 fw-bold" style="color: #2563eb">
+        {{ total_diproses }}
+      </div>
     </div>
   </div>
   <div class="col-md-3">
     <div class="card-stat">
       <div class="text-muted small mb-1">Selesai</div>
-      <div class="fs-2 fw-bold" style="color:#16a34a">{{ total_selesai }}</div>
+      <div class="fs-2 fw-bold" style="color: #16a34a">{{ total_selesai }}</div>
     </div>
   </div>
 </div>
@@ -41,9 +43,21 @@
 <!-- Filter Status -->
 <div class="card-stat mb-3 d-flex gap-2 flex-wrap align-items-center">
   <span class="text-muted small">Filter:</span>
-  <a href="/pesanan" class="btn btn-sm {% if not status_filter %}btn-purple text-white{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;{% if not status_filter %}background:#a855f7;border-color:#a855f7{% endif %}">Semua</a>
-  {% for s, warna in [('Menunggu','warning'),('Diproses','primary'),('Dikirim','info'),('Selesai','success'),('Dibatalkan','danger')] %}
-  <a href="/pesanan?status={{ s }}" class="btn btn-sm btn-outline-{{ warna }} {% if status_filter==s %}active{% endif %}" style="border-radius:20px">{{ s }}</a>
+  <a
+    href="/pesanan"
+    class="btn btn-sm {% if not status_filter %}btn-purple text-white{% else %}btn-outline-secondary{% endif %}"
+    style="border-radius:20px;{% if not status_filter %}background:#a855f7;border-color:#a855f7{% endif %}"
+    >Semua</a
+  >
+  {% for s, warna in
+  [('Menunggu','warning'),('Diproses','primary'),('Dikirim','info'),('Selesai','success'),('Dibatalkan','danger')]
+  %}
+  <a
+    href="/pesanan?status={{ s }}"
+    class="btn btn-sm btn-outline-{{ warna }} {% if status_filter==s %}active{% endif %}"
+    style="border-radius: 20px"
+    >{{ s }}</a
+  >
   {% endfor %}
 </div>
 
@@ -51,75 +65,182 @@
 <div class="card-stat">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-      <thead><tr>
-        <th>Kode</th><th>Pembeli</th><th>Produk</th><th>Total</th><th>Tanggal</th><th>Ulasan</th><th>Status</th><th>Ubah Status</th>
-      </tr></thead>
+      <thead>
+        <tr>
+          <th>Kode</th>
+          <th>Pembeli</th>
+          <th>Produk</th>
+          <th>Total</th>
+          <th>Tanggal</th>
+          <th>Metode Bayar</th>
+          <th>Ulasan</th>
+          <th>Status Bayar</th>
+          <th>Status</th>
+          <th>Ubah Status</th>
+        </tr>
+      </thead>
       <tbody>
-      {% for p in pesanan_list %}
-      <tr>
-        <td><code style="color:#7c3aed;font-size:.8rem">{{ p.kode }}</code></td>
-        <td>
-          <div class="fw-semibold small">{{ p.nama_pembeli }}</div>
-          <div class="text-muted" style="font-size:.75rem">{{ p.email }}</div>
-          <div class="text-muted" style="font-size:.75rem">{{ p.no_hp }}</div>
-        </td>
-        <td class="small">
-          {% for item in p.items %}
-          <div>{{ item.produk.nama[:35] if item.produk else '-' }}… <span class="text-muted">({{ item.jumlah }}x)</span></div>
-          {% endfor %}
-        </td>
-        <td class="fw-bold" style="color:#7c3aed">Rp {{ "{:,.0f}".format(p.total_harga) }}</td>
-        <td class="text-muted small">{{ p.tanggal }}</td>
-        <td style="max-width:180px">
-          {% if p.status == 'Selesai' %}
-            {% set rev = p.reviews %}
-            {% if rev %}
-              {% for r in rev %}
-              <div class="mb-1">
-                <div>{% for i in range(r.rating) %}⭐{% endfor %}</div>
-                <div class="fw-semibold small">{{ r.nama }}</div>
-                <div class="text-muted" style="font-size:.75rem;line-height:1.4">
-                  "{{ r.komentar[:80] }}{% if r.komentar|length > 80 %}…{% endif %}"
-                </div>
-                <div class="text-muted" style="font-size:.7rem">{{ r.tanggal }}</div>
-              </div>
-              {% endfor %}
+        {% for p in pesanan_list %}
+        <tr>
+          <td>
+            <code style="color: #7c3aed; font-size: 0.8rem">{{ p.kode }}</code>
+          </td>
+          <td>
+            <div class="fw-semibold small">{{ p.nama_pembeli }}</div>
+            <div class="text-muted" style="font-size: 0.75rem">
+              {{ p.email }}
+            </div>
+            <div class="text-muted" style="font-size: 0.75rem">
+              {{ p.no_hp }}
+            </div>
+          </td>
+          <td class="small">
+            {% for item in p.items %}
+            <div>
+              {{ item.produk.nama[:35] if item.produk else '-' }}…
+              <span class="text-muted">({{ item.jumlah }}x)</span>
+            </div>
+            {% endfor %}
+          </td>
+          <td class="fw-bold" style="color: #7c3aed">
+            Rp {{ "{:,.0f}".format(p.total_harga) }}
+          </td>
+          <td class="text-muted small">{{ p.tanggal }}</td>
+          <td class="small">
+            {% if p.metode_bayar %}
+            <span
+              class="badge"
+              style="background: #ede9fe; color: #7c3aed; font-size: 0.75rem"
+            >
+              {{ p.metode_bayar }}
+            </span>
             {% else %}
-              <span class="text-muted small">Belum ada ulasan</span>
+            <span class="text-muted">—</span>
             {% endif %}
-          {% else %}
+          </td>
+          <td style="max-width: 180px">
+            {% if p.status == 'Selesai' %} {% set rev = p.reviews %} {% if rev
+            %} {% for r in rev %}
+            <div class="mb-1">
+              <div>{% for i in range(r.rating) %}⭐{% endfor %}</div>
+              <div class="fw-semibold small">{{ r.nama }}</div>
+              <div
+                class="text-muted"
+                style="font-size: 0.75rem; line-height: 1.4"
+              >
+                "{{ r.komentar[:80] }}{% if r.komentar|length > 80 %}…{% endif
+                %}"
+              </div>
+              <div class="text-muted" style="font-size: 0.7rem">
+                {{ r.tanggal }}
+              </div>
+            </div>
+            {% endfor %} {% else %}
+            <span class="text-muted small">Belum ada ulasan</span>
+            {% endif %} {% else %}
             <span class="text-muted small">—</span>
-          {% endif %}
-        </td>
-        <td>
-          <span class="badge px-2 py-1" style="font-size:.75rem;
+            {% endif %}
+          </td>
+
+          {# ── KOLOM STATUS BAYAR (baru) ── #}
+          <td>
+            {% set sb = p.status_bayar if p.status_bayar else 'Belum Bayar' %}
+            {% set is_cod = p.metode_bayar == 'Bayar di Tempat (COD)' %} {% if
+            is_cod %}
+            <span
+              class="badge"
+              style="background: #dcfce7; color: #166534; font-size: 0.72rem"
+              >COD</span
+            >
+            {% elif sb == 'Sudah Bayar' %}
+            <span
+              class="badge"
+              style="background: #dcfce7; color: #166534; font-size: 0.72rem"
+              >✅ Sudah Bayar</span
+            >
+            {% else %}
+            <div>
+              <span
+                class="badge mb-1"
+                style="background: #fee2e2; color: #991b1b; font-size: 0.72rem"
+                >⏳ Belum Bayar</span
+              >
+              <br />
+              {% if p.metode_bayar and p.metode_bayar != 'Bayar di Tempat (COD)'
+              %}
+              <a
+                href="/pesanan/konfirmasi-bayar/{{ p.id }}"
+                class="btn py-0 px-2 mt-1"
+                style="
+                  font-size: 0.72rem;
+                  background: #7c3aed;
+                  color: white;
+                  border-radius: 6px;
+                "
+                onclick="return confirm('Konfirmasi pembayaran dari {{ p.nama_pembeli }} sudah diterima?')"
+              >
+                ✓ Sudah Dibayar
+              </a>
+              {% endif %}
+            </div>
+            {% endif %}
+          </td>
+
+          <td>
+            <span
+              class="badge px-2 py-1"
+              style="font-size:.75rem;
             background:{% if p.status=='Selesai' %}#dcfce7;color:#166534
             {% elif p.status=='Dikirim' %}#dbeafe;color:#1e40af
             {% elif p.status=='Diproses' %}#fef9c3;color:#854d0e
             {% elif p.status=='Dibatalkan' %}#fee2e2;color:#991b1b
-            {% else %}#fef9c3;color:#854d0e{% endif %}">
-            {{ p.status }}
-          </span>
-        </td>
-        <td>
-          <div class="d-flex gap-1 flex-wrap">
-            {% if p.status == 'Menunggu' %}
-            <a href="/pesanan/update/{{ p.id }}/Diproses" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:.75rem">Proses</a>
-            <a href="/pesanan/update/{{ p.id }}/Dibatalkan" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size:.75rem">Batalkan</a>
-            {% elif p.status == 'Diproses' %}
-            <a href="/pesanan/update/{{ p.id }}/Dikirim" class="btn btn-sm btn-outline-info py-0 px-2" style="font-size:.75rem">Kirim</a>
-            {% elif p.status == 'Dikirim' %}
-            <a href="/pesanan/update/{{ p.id }}/Selesai" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:.75rem">Selesai</a>
-            {% else %}
-            <span class="text-muted small">—</span>
-            {% endif %}
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-      {% if not pesanan_list %}
-      <tr><td colspan="7" class="text-center text-muted py-4">Belum ada pesanan masuk</td></tr>
-      {% endif %}
+            {% else %}#fef9c3;color:#854d0e{% endif %}"
+            >
+              {{ p.status }}
+            </span>
+          </td>
+          <td>
+            <div class="d-flex gap-1 flex-wrap">
+              {% if p.status == 'Menunggu' %}
+              <a
+                href="/pesanan/update/{{ p.id }}/Diproses"
+                class="btn btn-sm btn-outline-primary py-0 px-2"
+                style="font-size: 0.75rem"
+                >Proses</a
+              >
+              <a
+                href="/pesanan/update/{{ p.id }}/Dibatalkan"
+                class="btn btn-sm btn-outline-danger py-0 px-2"
+                style="font-size: 0.75rem"
+                >Batalkan</a
+              >
+              {% elif p.status == 'Diproses' %}
+              <a
+                href="/pesanan/update/{{ p.id }}/Dikirim"
+                class="btn btn-sm btn-outline-info py-0 px-2"
+                style="font-size: 0.75rem"
+                >Kirim</a
+              >
+              {% elif p.status == 'Dikirim' %}
+              <a
+                href="/pesanan/update/{{ p.id }}/Selesai"
+                class="btn btn-sm btn-outline-success py-0 px-2"
+                style="font-size: 0.75rem"
+                >Selesai</a
+              >
+              {% else %}
+              <span class="text-muted small">—</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %} {% if not pesanan_list %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            Belum ada pesanan masuk
+          </td>
+        </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>

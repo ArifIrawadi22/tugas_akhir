@@ -66,7 +66,9 @@ class Pesanan(db.Model):
     alamat       = db.Column(db.Text)
     total_harga  = db.Column(db.Float)
     status       = db.Column(db.String(20), default='Menunggu')
+    status_bayar = db.Column(db.String(20), default='Belum Bayar') 
     tanggal      = db.Column(db.String(30))
+    metode_bayar = db.Column(db.String(50), default='') 
     items        = db.relationship('PesananItem', backref='pesanan')
 
 class PesananItem(db.Model):
@@ -205,6 +207,19 @@ def migrasi_kolom_gambar():
                 conn.execute(sa.text('ALTER TABLE produk ADD COLUMN gambar VARCHAR(200)'))
                 conn.commit()
             print("✅ Migrasi: kolom 'gambar' berhasil ditambahkan ke database lama")
+    if 'pesanan' in inspector.get_table_names():
+        kolom_ada = [c['name'] for c in inspector.get_columns('pesanan')]
+        if 'metode_bayar' not in kolom_ada:
+            with db.engine.connect() as conn:
+                conn.execute(sa.text("ALTER TABLE pesanan ADD COLUMN metode_bayar VARCHAR(50) DEFAULT ''"))
+                conn.commit()
+            print("✅ Migrasi: kolom 'metode_bayar' berhasil ditambahkan")
+        if 'status_bayar' not in kolom_ada:
+            with db.engine.connect() as conn:
+                conn.execute(sa.text("ALTER TABLE pesanan ADD COLUMN status_bayar VARCHAR(20) DEFAULT 'Belum Bayar'"))
+                conn.commit()
+            print("✅ Migrasi: kolom 'status_bayar' berhasil ditambahkan")
+
 
 def cek_login():
     return session.get('login', False)
@@ -491,13 +506,13 @@ def export_pesanan():
     ws1 = wb.active
     ws1.title = "Data Pesanan"
 
-    ws1.merge_cells('A1:I1')
+    ws1.merge_cells('A1:K1')
     hdr(ws1['A1'], f'📦 DATA PESANAN MASUK — Toko Kosmetik  (Export: {dt.now().strftime("%d %b %Y %H:%M")})',
         UNGU, PUTIH, True, 13)
     ws1.row_dimensions[1].height = 32
 
     headers = ['No','Kode Pesanan','Nama Pembeli','Email','No HP',
-               'Produk','Jumlah','Total (Rp)','Status','Tanggal']
+               'Produk','Jumlah','Total (Rp)','Status','Metode Pembayaran','Status Bayar','Tanggal']
     for i, h in enumerate(headers, 1):
         hdr(ws1.cell(2, i), h, UNGU, PUTIH)
     ws1.row_dimensions[2].height = 25
@@ -521,7 +536,7 @@ def export_pesanan():
         bg = ABU if idx % 2 == 0 else PUTIH
         data = [idx, p.kode, p.nama_pembeli, p.email, p.no_hp,
                 nama_produk, sum(i.jumlah for i in p.items),
-                p.total_harga, p.status, p.tanggal]
+                p.total_harga,p.status, p.metode_bayar, p.status_bayar, p.tanggal]
         for col, val in enumerate(data, 1):
             cell = ws1.cell(r, col)
             cell.value = val
@@ -700,6 +715,18 @@ def update_pesanan(id, status):
         p.status = status; db.session.commit()
     return redirect('/pesanan')
 
+@app.route('/pesanan/konfirmasi-bayar/<int:id>')
+def konfirmasi_bayar(id):
+    """Admin konfirmasi pembayaran sudah diterima"""
+    if not cek_login(): return redirect('/')
+    p = Pesanan.query.get_or_404(id)
+    p.status_bayar = 'Sudah Bayar'
+    # Otomatis ubah status pesanan jadi Diproses kalau masih Menunggu
+    if p.status == 'Menunggu':
+        p.status = 'Diproses'
+    db.session.commit()
+    return redirect('/pesanan')
+
 @app.route('/database')
 def lihat_database():
     if not cek_login(): return redirect('/')
@@ -713,7 +740,7 @@ def lihat_database():
         total = len(items)
     elif tabel=='pesanan':
         items = Pesanan.query.order_by(Pesanan.id.desc()).all()
-        kolom = ['ID','Kode','Pembeli','Email','Total','Status','Tanggal']
+        kolom = ['ID','Kode','Pembeli','Email','Total','Status','Metode Pembayaran','Tanggal']
         data  = [[p.id,p.kode,p.nama_pembeli,p.email,
                   f"Rp {p.total_harga:,.0f}",p.status,p.tanggal] for p in items]
         total = len(items)
@@ -814,6 +841,25 @@ def download_rdf():
     output.seek(0)
     return send_file(output, download_name='produk_kosmetik.ttl',
                      as_attachment=True, mimetype='text/turtle')
+
+from flask import Response
+@app.route('/rdf')
+def lihat_rdf():
+
+    if not cek_login():
+        return redirect('/')
+
+    import sys, os
+    sys.path.insert(0, os.path.dirname(__file__))
+
+    import ml_engine as mle
+
+    kg = mle.buat_knowledge_graph()
+
+    return Response(
+        kg['turtle_full'],
+        mimetype='text/turtle'
+    )
 
 if __name__ == '__main__':
     with app.app_context():
