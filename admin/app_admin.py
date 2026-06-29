@@ -14,13 +14,21 @@ import os, io
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'admin_rahasia_2024'
-# Database SAMA — pakai path absolut agar admin & user baca DB yang sama
+app.secret_key = os.environ.get('SECRET_KEY', 'admin_rahasia_2024')
+
+# ── Database: PostgreSQL di Render, SQLite di lokal ──
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH  = os.path.join(BASE_DIR, '..', 'kosmetik.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+
+DATABASE_URL = os.environ.get('DATABASE_URL', f'sqlite:///{DB_PATH}')
+# Render memberi URL postgres://, SQLAlchemy butuh postgresql://
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
 
 # Konfigurasi upload gambar
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
